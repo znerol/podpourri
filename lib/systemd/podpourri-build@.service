@@ -1,0 +1,12 @@
+[Unit]
+Description=Automated container rebuild
+Documentation=man:podpourri-build
+
+[Service]
+ExecStart=/usr/bin/env \
+    git gau-exec ${PODPOURRI_REPO} \
+    podpourri-tag-xargs ${PODPOURRI_JOBTAG_PREFIX} -I{PODPOURRI_JOBTAG} \
+    git gau-at {PODPOURRI_JOBTAG} \
+    podpourri-build {PODPOURRI_JOBTAG}
+
+SyslogIdentifier=podpourri-build

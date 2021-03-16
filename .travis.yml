@@ -1,0 +1,51 @@
+---
+os: linux
+dist: focal
+language: shell
+
+stages:
+  - "Lint"
+  - "Unit test"
+  - name: "Integration test"
+    if: fork = false AND type = push
+  - name: "GitHub release"
+    if: fork = false AND type = push AND tag IS present
+
+jobs:
+  include:
+    - stage: "Lint"
+      script:
+        - make lint
+
+    - stage: "Unit test"
+      addons:
+        apt:
+          packages:
+            - python3-cryptography
+      script:
+        - make python=python3 test
+
+    - stage: "GitHub release"
+      addons:
+        apt:
+          packages:
+            - python3-sphinx
+            - python3-sphinx-rtd-theme
+            - python3-sphinxcontrib.plantuml
+      script:
+        - make dist
+      deploy:
+        provider: releases
+        api_key:
+          secure: xxx
+        file:
+          - dist/podpourri-dist.tar.gz
+          - dist/podpourri-src.tar.gz
+          - dist/md5sum.txt
+          - dist/sha1sum.txt
+          - dist/sha256sum.txt
+        skip_cleanup: true
+        draft: true
+        on:
+          repo: podpourri/podpourri
+          tags: true

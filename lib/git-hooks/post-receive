@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Loop through all refs in a post-receive hook and run podpourri-build.
+
+set -eu
+
+while read -r _ _ REFNAME
+do
+    # Remove refs/heads/ prefix (if matching).
+    BRANCH=${REFNAME#refs/heads/}
+    case "${BRANCH}" in
+        *[!a-zA-Z0-9-_.]*)
+            # Invalid ref name. This is either a tag and thus containing
+            # slashes (refs/tags/...) or it is a branch containing characters
+            # which are not suitable as container tags. Skipping build.
+            ;;
+        *)
+            /usr/bin/env git gau-exec "${PWD}#${BRANCH}" \
+                podpourri-tag-xargs build-push- -I"{PODPOURRI_JOBTAG}" \
+                git gau-at "{PODPOURRI_JOBTAG}" \
+                podpourri-build "{PODPOURRI_JOBTAG}"
+            ;;
+    esac
+done

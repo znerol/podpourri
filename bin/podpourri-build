@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# Builds and pushes container from spec found at git toplevel directory.
+#
+# Information is derived from repository whenever possible. I.e.:
+#
+# * Image name is derived from basename of origin URL.
+# * Container tag is derived from git branch. (no builds for non-branch refs).
+#   Thus when run on `latest` branch creates `latest` container tag.
+# * Additional tags can be specified on the command line.
+#
+# Additional information can be supplied via configfile in
+# ~/.config/podpourri/podpourri.conf:
+#
+# * Pushes image and tags to registry when registry.prefix is specified in
+#   config file. Use the following config to push to a registry on localhost:
+#   [registry]
+#   	prefix = localhost:5000/
+#
+# * Enables and starts systemd units which rebuild and push specified branches
+#   periodically.
+
+set -eu
+
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+REGISTRY_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" registry.prefix || echo)"
+AUTOBUILD_DAILY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.daily || echo)"
+AUTOBUILD_WEEKLY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.weekly || echo)"
+
+WORKDIR="$(/usr/bin/env git rev-parse --show-toplevel 2>/dev/null || echo)"
+if [ -n "${WORKDIR}" ] && [ -d "${WORKDIR}" ]; then
+    BRANCH="$(/usr/bin/env git rev-parse --abbrev-ref HEAD)"
+
+    case "${BRANCH}" in
+        *[!a-zA-Z0-9-_.]*)
+            echo "Podpourri: Invalid ref, not running build" >&2
+            ;;
+        *)
+            ORIGIN="$(/usr/bin/env git remote get-url origin)"
+            IMAGE_NAME="$(/usr/bin/env basename "${ORIGIN}" .git)"
+            
+            /usr/bin/env podman build \
+                -t "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
+                "${WORKDIR}"
+
+            if [ -n "${REGISTRY_PREFIX}" ]; then
+                /usr/bin/env podman push "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
+                echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
+            fi
+
+            for TAG in "$@"; do
+                /usr/bin/env podman tag "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" "${REGISTRY_PREFIX}${IMAGE_NAME}:${TAG}"
+                if [ -n "${REGISTRY_PREFIX}" ]; then
+                    /usr/bin/env podman push "${REGISTRY_PREFIX}${IMAGE_NAME}:${TAG}"
+                    echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${TAG}" >&2
+                fi
+            done
+
+            for REF in ${AUTOBUILD_DAILY}; do
+                if [ "${REF}" = "${BRANCH}" ]; then
+                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-daily@.timer" "${ORIGIN}#${BRANCH}")"
+                    /usr/bin/env systemctl --user enable --now "${UNIT}"
+                fi
+            done
+
+            for REF in ${AUTOBUILD_WEEKLY}; do
+                if [ "${REF}" = "${BRANCH}" ]; then
+                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-weekly@.timer" "${ORIGIN}#${BRANCH}")"
+                    /usr/bin/env systemctl --user enable --now "${UNIT}"
+                fi
+            done
+    esac
+fi
