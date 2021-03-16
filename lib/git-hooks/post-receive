@@ -4,6 +4,8 @@
 
 set -eu
 
+umask 0022
+
 while read -r _ _ REFNAME
 do
     # Remove refs/heads/ prefix (if matching).
