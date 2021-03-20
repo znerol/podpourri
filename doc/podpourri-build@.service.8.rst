@@ -18,7 +18,7 @@ Description
 
 Periodically rebuilds container images.
 
-The instance name (systemd instance string specifier ``%i``) is used as the
+The instance name (systemd instance string specifier ``%I``) is used as the
 repository url.
 
 
