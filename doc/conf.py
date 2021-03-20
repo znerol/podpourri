@@ -146,6 +146,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('podpourri-build.1', 'podpourri-build', 'Podpourri Documentation', [author], 1),
+    ('podpourri-schedule-systemd.1', 'podpourri-schedule-systemd', 'Podpourri Documentation', [author], 1),
     ('podpourri-tag-xargs.1', 'podpourri-tag-xargs', 'Podpourri Documentation', [author], 1),
     ('podpourri.conf.5', 'podpourri.conf', 'Podpourri Documentation', [author], 5),
     ('podpourri-build@.service.8', 'podpourri-build@.service', 'Podpourri Documentation', [author], 8),

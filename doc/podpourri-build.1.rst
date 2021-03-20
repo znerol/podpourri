@@ -1,22 +1,23 @@
 podpourri-build
-===================
+===============
 
 Synopsis
 --------
 
-**podpourri-build** [*additional-tags* ...]
+**podpourri-build** *context* *podman* [*additional-tags* ...]
 
 
 Description
 -----------
 
-Builds and pushes container from spec found at git toplevel directory.
+Uses *podman* to build and push an image from spec found at *context*
+directory.
 
 Information is derived from repository whenever possible. I.e.:
 
 - Image name is derived from basename of origin URL.
-- Container tag is derived from git branch. (no builds for non-branch refs).
-  Thus when run on ``latest`` branch creates ``latest`` container tag.
+- Image tag is derived from git branch. (no builds for non-branch refs).
+  Thus when run on ``latest`` branch creates ``latest`` image tag.
 - Additional tags can be specified on the command line.
 
 Additional information and automated build setup can be specified in
