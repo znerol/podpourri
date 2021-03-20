@@ -26,6 +26,7 @@ CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
 REGISTRY_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" registry.prefix || echo)"
 AUTOBUILD_DAILY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.daily || echo)"
 AUTOBUILD_WEEKLY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.weekly || echo)"
+AUTOBUILD_URL_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.prefix || echo)"
 
 WORKDIR="$(/usr/bin/env git rev-parse --show-toplevel 2>/dev/null || echo)"
 if [ -n "${WORKDIR}" ] && [ -d "${WORKDIR}" ]; then
@@ -37,7 +38,8 @@ if [ -n "${WORKDIR}" ] && [ -d "${WORKDIR}" ]; then
             ;;
         *)
             ORIGIN="$(/usr/bin/env git remote get-url origin)"
-            IMAGE_NAME="$(/usr/bin/env basename "${ORIGIN}" .git)"
+            IMAGE_NAME="${ORIGIN##*[:/]}"
+            IMAGE_NAME="${IMAGE_NAME%.git}"
             
             /usr/bin/env podman build \
                 -t "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
@@ -56,16 +58,21 @@ if [ -n "${WORKDIR}" ] && [ -d "${WORKDIR}" ]; then
                 fi
             done
 
+            AUTOBUILD_URL="${ORIGIN}"
+            if [ -n "${AUTOBUILD_URL_PREFIX}" ]; then
+                AUTOBUILD_URL="${AUTOBUILD_URL_PREFIX}${IMAGE_NAME}"
+            fi
+
             for REF in ${AUTOBUILD_DAILY}; do
                 if [ "${REF}" = "${BRANCH}" ]; then
-                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-daily@.timer" "${ORIGIN}#${BRANCH}")"
+                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-daily@.timer" "${AUTOBUILD_URL}#${BRANCH}")"
                     /usr/bin/env systemctl --user enable --now "${UNIT}"
                 fi
             done
 
             for REF in ${AUTOBUILD_WEEKLY}; do
                 if [ "${REF}" = "${BRANCH}" ]; then
-                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-weekly@.timer" "${ORIGIN}#${BRANCH}")"
+                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-weekly@.timer" "${AUTOBUILD_URL}#${BRANCH}")"
                     /usr/bin/env systemctl --user enable --now "${UNIT}"
                 fi
             done
