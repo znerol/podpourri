@@ -146,6 +146,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('podpourri-build.1', 'podpourri-build', 'Podpourri Documentation', [author], 1),
+    ('podpourri-tag-xargs.1', 'podpourri-tag-xargs', 'Podpourri Documentation', [author], 1),
+    ('podpourri.conf.5', 'podpourri.conf', 'Podpourri Documentation', [author], 5),
     ('podpourri-build@.service.8', 'podpourri-build@.service', 'Podpourri Documentation', [author], 8),
     ('podpourri-hook-post-receive.8', 'podpourri-hook-post-receive', 'Podpourri Documentation', [author], 8),
 ]
@@ -184,7 +186,8 @@ epub_exclude_files = ['search.html']
 # -- Ad-hoc extensions -------------------------------------------------------
 
 def setup(app):
-    app.add_object_type('envfile', 'envfile', indextemplate='environment file; %s')
+    app.add_object_type('envfile', 'envfile', indextemplate='environment files; %s')
+    app.add_object_type('confvalue', 'confvalue', indextemplate='configuration variables; %s')
 
 # -- PlantUML configuration --------------------------------------------------
 

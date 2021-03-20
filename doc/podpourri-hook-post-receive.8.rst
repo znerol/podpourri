@@ -10,10 +10,10 @@ Synopsis
 Description
 -----------
 
-A hook script for :program:`git` designed to run `podpourri-build` for each
+A hook script for :program:`git` designed to run ``podpourri-build`` for each
 pushed ref.
 
 See Also
 --------
 
-:manpage:`podpourri-build(1)`,
+:manpage:`podpourri-build(1)`, :manpage:`githooks(5)`
