@@ -36,6 +36,12 @@ Environment
    after the build. Defaults to ``build-daily-`` and ``build-weekly-``
    respectively.
 
+.. envvar:: PODPOURRI_BUILD_ARGS
+
+   Additional podman build args for automated container image builds.
+   Defaults to ``--pull=true``.
+
+
 Files
 -----
 

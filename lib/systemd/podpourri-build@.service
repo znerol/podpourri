@@ -8,6 +8,6 @@ ExecStart=/usr/bin/env \
     podpourri-tag-xargs ${PODPOURRI_JOBTAG_PREFIX} -I{PODPOURRI_JOBTAG} \
     git gau-at {PODPOURRI_JOBTAG} \
     git gau-xargs -I{WORKDIR} \
-    podpourri-build {WORKDIR} podman {PODPOURRI_JOBTAG}
+    podpourri-build {WORKDIR} {PODPOURRI_JOBTAG} podman $PODPOURRI_BUILD_ARGS
 
 SyslogIdentifier=podpourri-build
