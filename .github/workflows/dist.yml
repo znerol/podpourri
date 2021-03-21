@@ -3,8 +3,10 @@ name: Dist
 
 on:
   push:
+    branches:
+      - main
+      - develop
     tags:
-      - v*
 
 jobs:
   dist:
@@ -16,7 +18,7 @@ jobs:
       - unittest
 
     steps:
-      - name: Install xmllint
+      - name: Install sphinx
         run: >
             sudo apt-get install --yes
             python3-sphinx
@@ -26,5 +28,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Run unit test
+      - name: Make dist
         run: make dist
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+          retention-days: 3
