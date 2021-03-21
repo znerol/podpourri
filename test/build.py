@@ -10,6 +10,8 @@ class BuildTestCase(unittest.TestCase):
     workdir = None
     repodir = None
     clonedir = None
+    homedir = None
+    env = {}
 
     def setUp(self):
       self.podman_stub = os.path.join(
@@ -33,6 +35,14 @@ class BuildTestCase(unittest.TestCase):
       clonecmd = ['git', 'clone', self.repodir, self.clonedir]
       subprocess.check_call(clonecmd)
 
+      self.homedir = os.path.join(self.workdir, 'home')
+      os.mkdir(self.homedir)
+
+      self.env = os.environ.copy()
+      self.env.update({
+          'HOME': self.homedir
+      })
+
 
     def tearDown(self):
         if self.workdir is not None:
@@ -40,10 +50,12 @@ class BuildTestCase(unittest.TestCase):
 
     def _repo_cmd(self, *args, **kwds):
         kwds.setdefault('cwd', self.repodir)
+        kwds.setdefault('env', self.env)
         return subprocess.check_output(args, **kwds)
 
     def _wd_cmd(self, *args, **kwds):
         kwds.setdefault('cwd', self.clonedir)
+        kwds.setdefault('env', self.env)
         return subprocess.check_output(args, **kwds)
 
     def testCallsPodmanBuildAndPodmanPush(self):
