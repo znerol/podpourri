@@ -27,13 +27,14 @@ Environment
 
 .. envvar:: PODPOURRI_REPO
 
-   URL of the repository where container build spec is maintained. Defaults to
-   the instance specifier.
+   URL of the repository where a container image build file is maintained.
+   Defaults to the instance specifier.
 
 .. envvar:: PODPOURRI_JOBTAG_PREFIX
 
-   Prefix for tag added to the container registry and the git repository after
-   the build. Defaults to ``build-daily-`` and ``build-weekly-`` respectively.
+   Prefix for tag added to the container image registry and the git repository
+   after the build. Defaults to ``build-daily-`` and ``build-weekly-``
+   respectively.
 
 Files
 -----

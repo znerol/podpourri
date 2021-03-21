@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# podpourri-schedule-systemd - Sets up timers for automated container image
+# rebuilds
+
+set -eu
+
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+AUTOBUILD_DAILY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.daily || echo)"
+AUTOBUILD_WEEKLY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.weekly || echo)"
+AUTOBUILD_URL_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.prefix || echo)"
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: systemctl [systemctl args...]"
+    return 1
+}
+
+podpourri_schedule_systemd() {
+    BRANCH="$(/usr/bin/env git rev-parse --abbrev-ref HEAD)"
+
+    case "${BRANCH}" in
+        *[!a-zA-Z0-9-_.]*)
+            echo "Podpourri: Invalid ref, not scheduling build" >&2
+            ;;
+        *)
+            ORIGIN="$(/usr/bin/env git remote get-url origin)"
+            IMAGE_NAME="${ORIGIN%/}"
+            IMAGE_NAME="${IMAGE_NAME##*[:/]}"
+            IMAGE_NAME="${IMAGE_NAME%.git}"
+
+            AUTOBUILD_URL="${ORIGIN}"
+            if [ -n "${AUTOBUILD_URL_PREFIX}" ]; then
+                AUTOBUILD_URL="${AUTOBUILD_URL_PREFIX}${IMAGE_NAME}"
+            fi
+
+            for REF in ${AUTOBUILD_DAILY}; do
+                if [ "${REF}" = "${BRANCH}" ]; then
+                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-daily@.timer" "${AUTOBUILD_URL}#${BRANCH}")"
+                    /usr/bin/env "${@}" enable --now "${UNIT}"
+                fi
+            done
+
+            for REF in ${AUTOBUILD_WEEKLY}; do
+                if [ "${REF}" = "${BRANCH}" ]; then
+                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-weekly@.timer" "${AUTOBUILD_URL}#${BRANCH}")"
+                    /usr/bin/env "${@}" enable --now "${UNIT}"
+                fi
+            done
+    esac
+}
+
+if [ "${#}" -gt 1 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_schedule_systemd "${@}"
+else
+    usage
+fi
