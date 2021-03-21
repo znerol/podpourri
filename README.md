@@ -1,5 +1,7 @@
 # podpourri - Simple git based container image build service
 
+[![CI](https://github.com/znerol/podpourri/actions/workflows/ci.yml/badge.svg)](https://github.com/znerol/podpourri/actions/workflows/ci.yml)
+
 A collection of scripts and systemd units which make it easy to setup a
 centralized container image build service with git.
 
