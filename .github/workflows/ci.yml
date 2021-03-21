@@ -1,14 +1,41 @@
 ---
-name: Dist
+name: CI
 
+# yamllint disable-line rule:truthy
 on:
   push:
     branches:
       - main
       - develop
     tags:
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Lint
+        run: make lint
+
+  unittest:
+    name: Unit test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run unit test
+        run: make python=python3 test
+
   dist:
     name: Dist
     runs-on: ubuntu-latest
@@ -16,6 +43,11 @@ jobs:
     needs:
       - lint
       - unittest
+
+    if: >
+        github.ref == 'refs/heads/main' ||
+        github.ref == 'refs/heads/develop' ||
+        startsWidth(github.ref, 'refs/tags/v') ||
 
     steps:
       - name: Install sphinx
