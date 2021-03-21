@@ -1,0 +1,39 @@
+---
+name: Dist
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+
+jobs:
+  dist:
+    name: Dist
+    runs-on: ubuntu-latest
+
+    needs:
+      - lint
+      - unittest
+
+    steps:
+      - name: Install sphinx
+        run: >
+            sudo apt-get install --yes
+            python3-sphinx
+            python3-sphinx-rtd-theme
+            python3-sphinxcontrib.plantuml
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Make dist
+        run: make dist
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+          retention-days: 3

@@ -1,0 +1,25 @@
+---
+name: Unit test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  unittest:
+    name: Unit test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run unit test
+        run: make python=python3 test
