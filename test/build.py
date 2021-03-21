@@ -80,8 +80,6 @@ class BuildTestCase(unittest.TestCase):
         output = self._wd_cmd('podpourri-build', 'context', 'jobtag-xyz',
                            self.podman_stub, '--build-arg=X=Y', '--jobs=0')
 
-        print(output)
-
         expect_lines = [
           b'PODMAN build called with args: -t registry.example.com/path/my-container-image:jobtag-xyz -t registry.example.com/path/my-container-image:latest --build-arg=X=Y --jobs=0 context',
           b'PODMAN push called with args: registry.example.com/path/my-container-image:jobtag-xyz',
