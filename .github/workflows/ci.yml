@@ -47,7 +47,7 @@ jobs:
     if: >
         github.ref == 'refs/heads/main' ||
         github.ref == 'refs/heads/develop' ||
-        startsWidth(github.ref, 'refs/tags/v') ||
+        startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Install sphinx
