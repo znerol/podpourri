@@ -3,8 +3,6 @@
 A collection of scripts and systemd units which make it easy to setup a
 centralized container image build service with git.
 
-[![Build Status](https://travis-ci.org/znerol/podpourri.svg?branch=develop)](https://travis-ci.org/znerol/podpourri)
-
 ## DEPENDENCIES
 
 Podpourri requires `podman`, `git` and [git-gau].
