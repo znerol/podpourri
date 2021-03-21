@@ -10,14 +10,15 @@ REGISTRY_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" registry.prefi
 
 # Print usage message and exit.
 usage() {
-    echo "${0}: context podman [additional tags...]"
+    echo "${0}: context jobtag podman [podman args...]"
     return 1
 }
 
 podpourri_build() {
     CONTEXT="${1}"
-    PODMAN="${2}"
-    shift 2
+    JOBTAG="${2}"
+    PODMAN="${3}"
+    shift 3
 
     BRANCH="$(/usr/bin/env git rev-parse --abbrev-ref HEAD)"
 
@@ -31,22 +32,20 @@ podpourri_build() {
             IMAGE_NAME="${IMAGE_NAME##*[:/]}"
             IMAGE_NAME="${IMAGE_NAME%.git}"
 
-            /usr/bin/env "${PODMAN}" build \
+            /usr/bin/env "${PODMAN}" image build \
+                -t "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" \
                 -t "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
-                "${CONTEXT}"
+                "${@}" "${CONTEXT}"
+            echo "Podpourri: Built ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
 
             if [ -n "${REGISTRY_PREFIX}" ]; then
-                /usr/bin/env "${PODMAN}" push "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
+                /usr/bin/env "${PODMAN}" image push \
+                    "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
+                echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
+                /usr/bin/env "${PODMAN}" image push \
+                    "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
                 echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
             fi
-
-            for TAG in "${@}"; do
-                /usr/bin/env "${PODMAN}" tag "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" "${REGISTRY_PREFIX}${IMAGE_NAME}:${TAG}"
-                if [ -n "${REGISTRY_PREFIX}" ]; then
-                    /usr/bin/env "${PODMAN}" push "${REGISTRY_PREFIX}${IMAGE_NAME}:${TAG}"
-                    echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${TAG}" >&2
-                fi
-            done
     esac
 }
 
