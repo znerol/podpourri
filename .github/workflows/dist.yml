@@ -1,0 +1,30 @@
+---
+name: Dist
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  dist:
+    name: Dist
+    runs-on: ubuntu-latest
+
+    needs:
+      - lint
+      - unittest
+
+    steps:
+      - name: Install xmllint
+        run: >
+            sudo apt-get install --yes
+            python3-sphinx
+            python3-sphinx-rtd-theme
+            python3-sphinxcontrib.plantuml
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run unit test
+        run: make dist
