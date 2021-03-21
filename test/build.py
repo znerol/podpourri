@@ -58,12 +58,34 @@ class BuildTestCase(unittest.TestCase):
         kwds.setdefault('env', self.env)
         return subprocess.check_output(args, **kwds)
 
-    def testCallsPodmanBuildAndPodmanPush(self):
+    def testCallsPodmanBuildWithoutPush(self):
         output = self._wd_cmd('podpourri-build', 'context', 'jobtag-xyz',
                            self.podman_stub, '--build-arg=X=Y', '--jobs=0')
 
         expect_lines = [
           b'PODMAN build called with args: -t my-container-image:jobtag-xyz -t my-container-image:latest --build-arg=X=Y --jobs=0 context',
+          b''
+        ]
+
+        self.assertEqual(output, b'\n'.join(expect_lines))
+
+    def testCallsPodmanBuildAndPodmanPush(self):
+        confdir = os.path.join(self.homedir, '.config', 'podpourri')
+        configfile = os.path.join(confdir, 'podpourri.conf')
+        confcmd = ['git', 'config', '--file', configfile,
+                   'registry.prefix', 'registry.example.com/path/']
+        os.makedirs(confdir)
+        subprocess.check_call(confcmd)
+
+        output = self._wd_cmd('podpourri-build', 'context', 'jobtag-xyz',
+                           self.podman_stub, '--build-arg=X=Y', '--jobs=0')
+
+        print(output)
+
+        expect_lines = [
+          b'PODMAN build called with args: -t registry.example.com/path/my-container-image:jobtag-xyz -t registry.example.com/path/my-container-image:latest --build-arg=X=Y --jobs=0 context',
+          b'PODMAN push called with args: registry.example.com/path/my-container-image:jobtag-xyz',
+          b'PODMAN push called with args: registry.example.com/path/my-container-image:latest',
           b''
         ]
 
