@@ -1,7 +1,7 @@
-# podpourri - Simple git based container build service
+# podpourri - Simple git based container image build service
 
 A collection of scripts and systemd units which make it easy to setup a
-centralized container build service with git.
+centralized container image build service with git.
 
 [![Build Status](https://travis-ci.org/znerol/podpourri.svg?branch=develop)](https://travis-ci.org/znerol/podpourri)
 

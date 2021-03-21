@@ -1,5 +1,5 @@
 [Unit]
-Description=Weekly container rebuilds
+Description=Weekly container image rebuilds
 
 [Timer]
 OnCalendar=weekly

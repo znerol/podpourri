@@ -1,5 +1,5 @@
 [Unit]
-Description=Automated container rebuild
+Description=Automated container image rebuild
 Documentation=man:podpourri-build
 
 [Service]

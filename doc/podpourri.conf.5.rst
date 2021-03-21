@@ -4,7 +4,7 @@ podpourri.conf
 Description
 -----------
 
-When building images ``podpourri-build`` will read configuration from
+When building container images ``podpourri-build`` will read configuration from
 *$HOME/.config/podpourri/podpourri.conf* file if it exists.
 
 The configuration file uses the same syntax as ``git-config``. In fact,
@@ -19,9 +19,9 @@ behavior of podpourri:
 .. confvalue:: registry.prefix
 
    Prefix for all images built by ``podpourri-build``. When set, images built
-   will be pushed to that registry after the build. Note that the value must
-   include a terminating separator. In order to push images to a registry
-   running on localhost on port 5000, use the following value:
+   will be pushed to that container image registry after the build. Note that
+   the value must include a terminating separator. In order to push images to a
+   registry running on localhost on port 5000, use the following value:
    ``localhost:5000/``. Empty by default.
 
 .. confvalue:: autobuild.daily

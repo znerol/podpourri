@@ -14,7 +14,7 @@ do
         *[!a-zA-Z0-9-_.]*)
             # Invalid ref name. This is either a tag and thus containing
             # slashes (refs/tags/...) or it is a branch containing characters
-            # which are not suitable as container tags. Skipping build.
+            # which are not suitable as image tags. Skipping build.
             ;;
         *)
             PODPOURRI_REPO="${PWD}#${BRANCH}"

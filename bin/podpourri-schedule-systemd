@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# podpourri-schedule-systemd Sets up timers for automated image rebuilds
+# podpourri-schedule-systemd - Sets up timers for automated container image
+# rebuilds
 
 set -eu
 

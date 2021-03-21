@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# podpourri-build - Uses *podman* to build and push an image from spec found at
-# *context* directory.
+# podpourri-build - Uses *podman* to build and push a container image build
+# file found at *context* directory.
 
 set -eu
 

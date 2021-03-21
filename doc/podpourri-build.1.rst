@@ -10,7 +10,7 @@ Synopsis
 Description
 -----------
 
-Uses *podman* to build and push an image from spec found at *context*
+Uses *podman* to build and push a container image bulid file found at *context*
 directory.
 
 Information is derived from repository whenever possible. I.e.:
