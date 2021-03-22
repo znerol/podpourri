@@ -3,8 +3,8 @@
 import sys
 
 if sys.argv[1] == 'image' and sys.argv[2] == 'build':
-  print('PODMAN build called with args:', ' '.join(sys.argv[3:]))
+    print('PODMAN build called with args:', ' '.join(sys.argv[3:]))
 elif sys.argv[1] == 'image' and sys.argv[2] == 'push':
-  print('PODMAN push called with args:', ' '.join(sys.argv[3:]))
+    print('PODMAN push called with args:', ' '.join(sys.argv[3:]))
 else:
-  sys.exit(1)
+    sys.exit(1)
