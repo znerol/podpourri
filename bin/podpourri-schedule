@@ -1,7 +1,6 @@
 #!/bin/sh
 #
-# podpourri-schedule-systemd - Sets up timers for automated container image
-# rebuilds
+# podpourri-schedule - Sets up schedule for automated container image rebuilds
 
 set -eu
 
@@ -9,6 +8,7 @@ CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
 AUTOBUILD_DAILY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.daily || echo)"
 AUTOBUILD_WEEKLY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.weekly || echo)"
 AUTOBUILD_URL_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.prefix || echo)"
+AUTOBUILD_METHOD="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.method || echo systemd-user)"
 
 # Print usage message and exit.
 usage() {
@@ -16,9 +16,18 @@ usage() {
     return 1
 }
 
-podpourri_schedule_systemd() {
-    BRANCH="$(/usr/bin/env git rev-parse --abbrev-ref HEAD)"
+podpourri_schedule() {
+    case "${AUTOBUILD_METHOD}" in
+        *[!a-zA-Z0-9-_.]*)
+            echo "Podpourri: Autobuild method" >&2
+            return 1
+            ;;
+        *)
+            HOOK="podpourri-schedule-${AUTOBUILD_METHOD}"
+            ;;
+    esac
 
+    BRANCH="$(/usr/bin/env git rev-parse --abbrev-ref HEAD)"
     case "${BRANCH}" in
         *[!a-zA-Z0-9-_.]*)
             echo "Podpourri: Invalid ref, not scheduling build" >&2
@@ -36,22 +45,20 @@ podpourri_schedule_systemd() {
 
             for REF in ${AUTOBUILD_DAILY}; do
                 if [ "${REF}" = "${BRANCH}" ]; then
-                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-daily@.timer" "${AUTOBUILD_URL}#${BRANCH}")"
-                    /usr/bin/env "${@}" enable --now "${UNIT}"
+                    /usr/bin/env "${HOOK}" daily "${AUTOBUILD_URL}" "${BRANCH}"
                 fi
             done
 
             for REF in ${AUTOBUILD_WEEKLY}; do
                 if [ "${REF}" = "${BRANCH}" ]; then
-                    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-weekly@.timer" "${AUTOBUILD_URL}#${BRANCH}")"
-                    /usr/bin/env "${@}" enable --now "${UNIT}"
+                    /usr/bin/env "${HOOK}" weekly "${AUTOBUILD_URL}" "${BRANCH}"
                 fi
             done
     esac
 }
 
-if [ "${#}" -gt 1 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
-    podpourri_schedule_systemd "${@}"
+if [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_schedule
 else
     usage
 fi

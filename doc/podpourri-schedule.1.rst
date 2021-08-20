@@ -1,17 +1,17 @@
-podpourri-schedule-systemd
-==========================
+podpourri-schedule
+==================
 
 Synopsis
 --------
 
-**podpourri-schedule-systemd** *systemctl* [*systemctl-args* ...]
+**podpourri-schedule**
 
 
 Description
 -----------
 
-Uses *systemctl* to schedule automated builds for a container image build file
-found at the origin URL of the currently checked out git working copy.
+Schedules automated builds for the container imague build file found at the
+origin URL of the currently checked out git working copy.
 
 Information is derived from repository whenever possible. I.e.:
 
@@ -21,6 +21,10 @@ Information is derived from repository whenever possible. I.e.:
 
 A list of branches considered for automated builds can be specified in
 **~/.config/podpourri/podpourri.conf** (see: :manpage:`podpourri.conf(5)`)
+
+By default **podpourri-schedule** uses **podpourri-schedule-systemd-user**
+method to configure a timer in the systemd user domain. This behavior can be
+overridden from within **~/.config/podpourri/podpourri.conf** as well.
 
 See Also
 --------

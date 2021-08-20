@@ -28,8 +28,7 @@ do
                 podpourri-build "{WORKDIR}" "{PODPOURRI_JOBTAG}" podman
 
             /usr/bin/env \
-                git gau-exec "${PODPOURRI_REPO}" \
-                podpourri-schedule-systemd systemctl --user
+                git gau-exec "${PODPOURRI_REPO}" podpourri-schedule
             ;;
     esac
 done

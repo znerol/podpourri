@@ -43,6 +43,18 @@ behavior of podpourri:
    SSH for repository hosting, the value used here should be something like
    ``git@repos.example.com:``. Empty by default.
 
+.. confvalue:: autobuild.method
+
+   Method used to schedule the autobuild timer. Possible values are
+   ``systemd-user`` (the default when empty) or ``systemd-sudo``. The latter
+   will use ``sudo podpourri-systemctl systemctl --system ...``. Hence the
+   calling user needs permission to execute the ``podpourri-systemctl`` script
+   with root privileges and without a password. E.g.:
+
+      podpourri   ALL = NOPASSWD: /usr/local/bin/podpourri-systemctl
+
+   Defaults to ``systemd-user``.
+
 
 See Also
 --------

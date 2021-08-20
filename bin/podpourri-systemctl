@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# podpourri-systemctl - Uses systemctl to setup timers for automated container
+# image rebuilds
+
+set -eu
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: systemctl --user|--system daily|weekly schedule repo-url branch"
+    return 1
+}
+
+podpourri_systemctl() {
+    SYSTEMCTL="${1}"
+    DOMAIN="${2}"
+    SCHEDULE="${3}"
+    URL="${4}"
+    BRANCH="${5}"
+
+    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-${SCHEDULE}@.timer" "${URL}#${BRANCH}")"
+    /usr/bin/env "${SYSTEMCTL}" "${DOMAIN}" enable --now --no-ask-password "${UNIT}"
+}
+
+if [ "${#}" -eq 5 ] && \
+    [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ] && \
+    { [ "${2:-}" = "--user" ] || [ "${2:-}" = "--system" ]; } && \
+    { [ "${3:-}" = "daily" ] || [ "${3:-}" = "weekly" ]; }; then
+    podpourri_systemctl "${@}"
+else
+    usage
+fi
