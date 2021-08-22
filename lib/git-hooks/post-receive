@@ -1,34 +1,50 @@
 #!/bin/sh
 #
-# Loop through all refs in a post-receive hook and run podpourri-build.
+# Loop through all refs in a post-receive hook, submit podpourri-job to
+# initiate a build and schedule automated rebuilds.
 
 set -eu
 
 umask 0022
 
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+REPO_BASEDIR="$(/usr/bin/env git config --file "${CONFIGFILE}" repo.basedir)"
+REPO_BASEURL="$(/usr/bin/env git config --file "${CONFIGFILE}" repo.baseurl)"
+AUTOBUILD_SCHEDULES="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.schedules || echo daily weekly)"
+
 while read -r _ _ REFNAME
 do
     # Remove refs/heads/ prefix (if matching).
     BRANCH=${REFNAME#refs/heads/}
+
     case "${BRANCH}" in
         *[!a-zA-Z0-9-_.]*)
             # Invalid ref name. This is either a tag and thus containing
-            # slashes (refs/tags/...) or it is a branch containing characters
-            # which are not suitable as image tags. Skipping build.
+            # slashes (refs/tags/...) or it is a branch containing
+            # characters which are not suitable as image tags. Skipping
+            # build.
+            echo "[WARN] Podpourri: Skipping build, invalid ref: ${BRANCH}" >&2
             ;;
+
         *)
-            PODPOURRI_REPO="${PWD}#${BRANCH}"
-            PODPOURRI_JOBTAG_PREFIX="build-push-"
+            REPO_URL="${PWD}#${BRANCH}"
+            if [ -n "$REPO_BASEDIR" ]; then
+                REPO_URL="${REPO_URL##${REPO_BASEDIR}}"
+            fi
+            if [ -n "$REPO_BASEURL" ]; then
+                REPO_URL="${REPO_URL_PREFIX}${REPO_URL}"
+            fi
 
-            /usr/bin/env \
-                git gau-exec "${PODPOURRI_REPO}" \
-                podpourri-tag-xargs "${PODPOURRI_JOBTAG_PREFIX}" -I"{PODPOURRI_JOBTAG}" \
-                git gau-at "{PODPOURRI_JOBTAG}" \
-                git gau-xargs -I"{WORKDIR}" \
-                podpourri-build "{WORKDIR}" "{PODPOURRI_JOBTAG}" podman
+            podpourri-job "build-push-" "${REPO_URL}"
 
-            /usr/bin/env \
-                git gau-exec "${PODPOURRI_REPO}" podpourri-schedule
+            for SCHEDULE in ${AUTOBUILD_SCHEDULES}; do
+                AUTOBUILD_REFS="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild."${SCHEDULE}" || echo)"
+                for REF in ${AUTOBUILD_REFS}; do
+                    if [ "${REF}" = "${BRANCH}" ]; then
+                        podpourri-schedule "${SCHEDULE}" "${REPO_URL}"
+                    fi
+                if
+            done
             ;;
     esac
 done

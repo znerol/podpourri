@@ -1,64 +1,33 @@
 #!/bin/sh
 #
-# podpourri-schedule - Sets up schedule for automated container image rebuilds
+# podpourri-schedule - Sets up schedule for automated container image rebuilds.
 
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-AUTOBUILD_DAILY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.daily || echo)"
-AUTOBUILD_WEEKLY="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.weekly || echo)"
-AUTOBUILD_URL_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.prefix || echo)"
 AUTOBUILD_METHOD="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.method || echo systemd-user)"
 
 # Print usage message and exit.
 usage() {
-    echo "${0}: systemctl [systemctl args...]"
+    echo "${0}: schedule repo-url"
     return 1
 }
 
 podpourri_schedule() {
     case "${AUTOBUILD_METHOD}" in
         *[!a-zA-Z0-9-_.]*)
-            echo "Podpourri: Autobuild method" >&2
+            echo "Podpourri: Invalid autobuild method" >&2
             return 1
             ;;
+
         *)
-            HOOK="podpourri-schedule-${AUTOBUILD_METHOD}"
+            /usr/bin/env "podpourri-schedule-${AUTOBUILD_METHOD}" "${@}"
             ;;
-    esac
-
-    BRANCH="$(/usr/bin/env git rev-parse --abbrev-ref HEAD)"
-    case "${BRANCH}" in
-        *[!a-zA-Z0-9-_.]*)
-            echo "Podpourri: Invalid ref, not scheduling build" >&2
-            ;;
-        *)
-            ORIGIN="$(/usr/bin/env git remote get-url origin)"
-            IMAGE_NAME="${ORIGIN%/}"
-            IMAGE_NAME="${IMAGE_NAME##*[:/]}"
-            IMAGE_NAME="${IMAGE_NAME%.git}"
-
-            AUTOBUILD_URL="${ORIGIN}"
-            if [ -n "${AUTOBUILD_URL_PREFIX}" ]; then
-                AUTOBUILD_URL="${AUTOBUILD_URL_PREFIX}${IMAGE_NAME}"
-            fi
-
-            for REF in ${AUTOBUILD_DAILY}; do
-                if [ "${REF}" = "${BRANCH}" ]; then
-                    /usr/bin/env "${HOOK}" daily "${AUTOBUILD_URL}" "${BRANCH}"
-                fi
-            done
-
-            for REF in ${AUTOBUILD_WEEKLY}; do
-                if [ "${REF}" = "${BRANCH}" ]; then
-                    /usr/bin/env "${HOOK}" weekly "${AUTOBUILD_URL}" "${BRANCH}"
-                fi
-            done
     esac
 }
 
-if [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
-    podpourri_schedule
+if [ "${#}" -eq 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_schedule "${@}"
 else
     usage
 fi

@@ -4,7 +4,7 @@ podpourri-schedule-systemd-sudo
 Synopsis
 --------
 
-**podpourri-schedule-systemd-sudo** *schedule* *repo-url* *branch*
+**podpourri-schedule-systemd-sudo** *schedule* *repo-url*
 
 
 Description

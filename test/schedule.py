@@ -25,10 +25,9 @@ class ScheduleSystemdTestCase(unittest.TestCase):
 
         os.mkdir(self.repodir)
 
-        self._repo_cmd('git', 'init')
+        self._repo_cmd('git', 'init', '-b', 'latest')
         self._repo_cmd('git', 'config', 'user.name', 'Test')
         self._repo_cmd('git', 'config', 'user.email', 'test@localhost')
-        self._repo_cmd('git', 'symbolic-ref', 'HEAD', 'refs/heads/latest')
         self._repo_cmd('git', 'commit', '--quiet',
                        '--allow-empty', '-m', 'Initial commit')
 
@@ -62,18 +61,10 @@ class ScheduleSystemdTestCase(unittest.TestCase):
         kwds.setdefault('env', self._env())
         return subprocess.check_output(args, **kwds)
 
-    def testNoActionUnlessConfigured(self):
-        output = self._wd_cmd('podpourri-schedule')
-        self.assertEqual(output, b'')
-
     def testCallsConfiguredMethodIfBranchEnabled(self):
         confdir = os.path.join(self.homedir, '.config', 'podpourri')
         configfile = os.path.join(confdir, 'podpourri.conf')
         confcmds = [
-            ['git', 'config', '--file', configfile,
-                'autobuild.weekly', 'develop latest'],
-            ['git', 'config', '--file', configfile,
-             'autobuild.prefix', 'git@code.example.com:'],
             ['git', 'config', '--file', configfile,
              'autobuild.method', 'stub'],
         ]
@@ -82,10 +73,10 @@ class ScheduleSystemdTestCase(unittest.TestCase):
             subprocess.check_call(confcmd)
 
         env=self._env(PATH="".join([self.stub_method_path, os.pathsep, os.environ['PATH']]))
-        output = self._wd_cmd('podpourri-schedule', env=env)
+        output = self._wd_cmd('podpourri-schedule', 'weekly', 'git@code.example.com:my-container-image#latest', env=env)
 
         expect_lines = [
-            b'STUB-METHOD called with args: weekly git@code.example.com:my-container-image latest',
+            b'STUB-METHOD called with args: weekly git@code.example.com:my-container-image#latest',
             b''
         ]
 

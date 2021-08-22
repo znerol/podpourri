@@ -4,7 +4,7 @@ podpourri-schedule-systemd-user
 Synopsis
 --------
 
-**podpourri-schedule-systemd-user** *schedule* *repo-url* *branch*
+**podpourri-schedule-systemd-user** *schedule* *repo-url*
 
 
 Description

@@ -10,10 +10,16 @@ Synopsis
 Description
 -----------
 
-A hook script for :program:`git` designed to run ``podpourri-build`` for each
-pushed ref.
+A hook script for :program:`git` designed to run ``podpourri-job`` for each
+pushed ref and schedule automated rebuilds using ``podpourri-schedule``.
+
+A build job is run for each pushed branch. The public repository URL is
+generated from :confvalue:`repo.basedir` and :confvalue:`repo.baseurl`.
+
+A list of branches considered for automated builds can be specified in
+**~/.config/podpourri/podpourri.conf** (see: :manpage:`podpourri.conf(5)`)
 
 See Also
 --------
 
-:manpage:`podpourri-build(1)`, :manpage:`githooks(5)`
+:manpage:`podpourri-job(1)`, :manpage:`podpourri-schedule(1)`, :manpage:`githooks(5)`
