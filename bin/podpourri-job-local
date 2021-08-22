@@ -17,14 +17,14 @@ podpourri_job_local() {
 
     /usr/bin/env \
         git gau-exec "${PODPOURRI_REPO}" \
-        podpourri-tag-xargs "${PODPOURRI_JOBTAG_PREFIX}" -I{PODPOURRI_JOBTAG} \
-        git gau-at {PODPOURRI_JOBTAG} \
-        git gau-xargs -I{WORKDIR} \
-        podpourri-build {WORKDIR} {PODPOURRI_JOBTAG} podman "${@}"
+        podpourri-tag-xargs "${PODPOURRI_JOBTAG_PREFIX}" -I"{PODPOURRI_JOBTAG}" \
+        git gau-at "{PODPOURRI_JOBTAG}" \
+        git gau-xargs -I"{WORKDIR}" \
+        podpourri-build "{WORKDIR}" "{PODPOURRI_JOBTAG}" podman "${@}"
 }
 
 if [ "${#}" -gt 1 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
-    podpourri_job_local
+    podpourri_job_local "${@}"
 else
     usage
 fi
