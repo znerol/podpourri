@@ -38,7 +38,12 @@ behavior of podpourri:
 .. confvalue:: job.method
 
    Method used to execute a build job. Possible values are ``local`` (the
-   default when empty).
+   default when empty) and ``ssh``.
+
+.. confvalue:: job.sshDestination
+
+   Required if ``job.method`` is set to ``ssh``. The remote (``user@host``)
+   where ``podman-job`` will be run.
 
 .. confvalue:: autobuild.schedules
 
@@ -66,6 +71,10 @@ behavior of podpourri:
 
    Defaults to ``systemd-user``.
 
+.. confvalue:: autobuild.sshDestination
+
+   Required if ``job.method`` is set to ``ssh``. The remote (``user@host``)
+   where ``podman-schedule`` will be run.
 
 See Also
 --------

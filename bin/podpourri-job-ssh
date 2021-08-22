@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# podpourri-job-ssh - Forward job execution to remote host via ssh.
+
+set -eu
+
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+SSH_DESTINATION="$(/usr/bin/env git config --file "${CONFIGFILE}" job.sshDestination)"
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: job-tag-prefix repo-url"
+    return 1
+}
+
+podpourri_job_ssh() {
+    if [ -n "${SSH_DESTINATION}" ]; then
+        /usr/bin/env ssh "${SSH_DESTINATION}" -- podpouri-job "${@}"
+    else
+        echo "Podpourri: Please specify job.sshDestination in podpourri.conf" >&2
+        return 1
+    fi
+}
+
+if [ "${#}" -gt 1 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_job_ssh "${@}"
+else
+    usage
+fi
