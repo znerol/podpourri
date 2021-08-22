@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# podpourri-schedule-systemd-sudo - Sets up timers in systemd system domain
+# with the help of sudo for automated container image rebuilds
+
+set -eu
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: schedule repo-url"
+    return 1
+}
+
+podpourri_schedule_systemd_sudo() {
+    /usr/bin/env sudo -n podpourri-systemctl systemctl --system "${@}"
+}
+
+if [ "${#}" -eq 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_schedule_systemd_sudo "${@}"
+else
+    usage
+fi

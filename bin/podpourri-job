@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# podpourri-job - Submits a build job for immediate execution.
+
+set -eu
+
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+JOB_METHOD="$(/usr/bin/env git config --file "${CONFIGFILE}" job.method || echo local)"
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: job-tag-prefix repo-url"
+    return 1
+}
+
+podpourri_job() {
+    case "${JOB_METHOD}" in
+        *[!a-zA-Z0-9-_.]*)
+            echo "Podpourri: Invalid job method" >&2
+            return 1
+            ;;
+
+        *)
+            /usr/bin/env "podpourri-job-${JOB_METHOD}" "${@}"
+            ;;
+    esac
+}
+
+if [ "${#}" -gt 1 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_job "${@}"
+else
+    usage
+fi

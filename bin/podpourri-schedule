@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# podpourri-schedule - Sets up schedule for automated container image rebuilds.
+
+set -eu
+
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+AUTOBUILD_METHOD="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.method || echo systemd-user)"
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: schedule repo-url"
+    return 1
+}
+
+podpourri_schedule() {
+    case "${AUTOBUILD_METHOD}" in
+        *[!a-zA-Z0-9-_.]*)
+            echo "Podpourri: Invalid autobuild method" >&2
+            return 1
+            ;;
+
+        *)
+            /usr/bin/env "podpourri-schedule-${AUTOBUILD_METHOD}" "${@}"
+            ;;
+    esac
+}
+
+if [ "${#}" -eq 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_schedule "${@}"
+else
+    usage
+fi

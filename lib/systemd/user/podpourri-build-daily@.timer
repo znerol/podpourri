@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily container image rebuilds
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=3600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

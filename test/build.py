@@ -25,10 +25,9 @@ class BuildTestCase(unittest.TestCase):
 
         os.mkdir(self.repodir)
 
-        self._repo_cmd('git', 'init')
+        self._repo_cmd('git', 'init', '-b', 'latest')
         self._repo_cmd('git', 'config', 'user.name', 'Test')
         self._repo_cmd('git', 'config', 'user.email', 'test@localhost')
-        self._repo_cmd('git', 'symbolic-ref', 'HEAD', 'refs/heads/latest')
         self._repo_cmd('git', 'commit', '--quiet',
                        '--allow-empty', '-m', 'Initial commit')
 

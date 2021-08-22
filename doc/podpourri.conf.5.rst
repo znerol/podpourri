@@ -24,6 +24,26 @@ behavior of podpourri:
    registry running on localhost on port 5000, use the following value:
    ``localhost:5000/``. Empty by default.
 
+.. confvalue:: repo.basedir
+
+   Base directory of repository hosting service. The base directory is removed
+   from the PWD during execution of ``post-receive`` hook. Empty by default.
+
+.. confvalue:: repo.baseurl
+
+   Public base url of the repository hosting service. The base url is prepended
+   after ``repo.basedir`` has been removed to generate the public repo url.
+   Empty by default.
+
+.. confvalue:: job.method
+
+   Method used to execute a build job. Possible values are ``local`` (the
+   default when empty).
+
+.. confvalue:: autobuild.schedules
+
+   List of build schedules. Defaults to ``daily weekly``.
+
 .. confvalue:: autobuild.daily
 
    Space separated list of branches which should be scheduled for daily
@@ -34,14 +54,17 @@ behavior of podpourri:
    Space separated list of branches which should be scheduled for weekly
    automated rebuild. Empty by default.
 
-.. confvalue:: autobuild.prefix
+.. confvalue:: autobuild.method
 
-   Git URL prefix to use when scheduling automated rebuilds. This is used by
-   ``podpourri-build`` to determine the fully qualified URL to the repository
-   when scheduling automated rebuilds. Note that the value must include a
-   terminating separator (i.e., ``/`` or ``:``). E.g., when using gitolite and
-   SSH for repository hosting, the value used here should be something like
-   ``git@repos.example.com:``. Empty by default.
+   Method used to schedule the autobuild timer. Possible values are
+   ``systemd-user`` (the default when empty) or ``systemd-sudo``. The latter
+   will use ``sudo podpourri-systemctl systemctl --system ...``. Hence the
+   calling user needs permission to execute the ``podpourri-systemctl`` script
+   with root privileges and without a password. E.g.:
+
+      podpourri   ALL = NOPASSWD: /usr/local/bin/podpourri-systemctl
+
+   Defaults to ``systemd-user``.
 
 
 See Also

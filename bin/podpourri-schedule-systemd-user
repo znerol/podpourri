@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# podpourri-schedule-systemd-user - Sets up timers in systemd current user
+# domain for automated container image rebuilds
+
+set -eu
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: schedule repo-url"
+    return 1
+}
+
+podpourri_schedule_systemd_user() {
+    /usr/bin/env podpourri-systemctl systemctl --user "${@}"
+}
+
+if [ "${#}" -eq 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_schedule_systemd_user "${@}"
+else
+    usage
+fi
