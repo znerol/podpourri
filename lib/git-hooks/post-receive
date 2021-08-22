@@ -43,7 +43,7 @@ do
                     if [ "${REF}" = "${BRANCH}" ]; then
                         podpourri-schedule "${SCHEDULE}" "${REPO_URL}"
                     fi
-                if
+                done
             done
             ;;
     esac
