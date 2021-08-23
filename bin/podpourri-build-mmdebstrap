@@ -8,6 +8,17 @@ set -eu
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
 REGISTRY_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" registry.prefix || echo)"
 
+DPKGOPT_DEFAULT=<<EOF
+path-exclude=/usr/share/man/*
+path-include=/usr/share/man/man[1-9]/*
+path-exclude=/usr/share/locale/*
+path-include=/usr/share/locale/locale.alias
+path-exclude=/usr/share/{doc,info,man,omf,help,gnome/help}/*
+path-include=/usr/share/doc/*/copyright
+path-exclude=/usr/share/lintian/*
+path-exclude=/usr/share/linda/*
+EOF
+
 # Print usage message and exit.
 usage() {
     echo "${0}: context jobtag podman mmdebstrap"
@@ -37,18 +48,29 @@ podpourri_build_mmdebstrap() {
 
             ARCHIVE="${WORKDIR}/root.tar"
 
+            DPKGOPT="${CONTEXT}/dpkg.cfg"
+            if [ ! -e "${DPKGOPT}" ]; then
+                DPKGOPT="${WORKDIR}/dpkg.cfg"
+                echo "${DPKGOPT_DEFAULT}" > "${DPKGOPT}"
+            fi
+
+            SOURCESLIST="${CONTEXT}/sources.list"
+            if [ ! -e "${SOURCESLIST}" ]; then
+                SOURCESLIST="/etc/apt/sources.list"
+            fi
+
             # https://reproducible-builds.org/docs/source-date-epoch/#git
             /usr/bin/env \
                 SOURCE_DATE_EPOCH="$(/usr/bin/env git log -1 --pretty=%ct)" \
                 "${MMDEBSTRAP}" \
                 --verbose \
-                --dpkgopt="${CONTEXT}/dpkg.cfg" \
+                --dpkgopt="${DPKGOPT}" \
                 --variant=required \
-                < "${CONTEXT}/sources.list" > "${ARCHIVE}"
+                < "${SOURCESLIST}" > "${ARCHIVE}"
 
             ARCHIVE_DGST_OUT="$(/usr/bin/env sha256sum "${ARCHIVE}")"
             ARCHIVE_DGST="[sha256:${ARCHIVE_DGST_OUT%% *}]"
-            
+
             EXISTING_DGST=""
             if /usr/bin/env "${PODMAN}" image pull "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"; then
                 EXISTING_DGST="$(/usr/bin/env "${PODMAN}" image inspect --format '{{.RootFS.Layers}}' "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}")"
@@ -72,6 +94,7 @@ podpourri_build_mmdebstrap() {
             else
                 echo "Podpourri: Image is up-to-date: ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
             fi
+            ;;
     esac
 }
 
