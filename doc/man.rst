@@ -6,8 +6,10 @@ Man Pages
    :caption: Contents:
 
    podpourri-build.1
+   podpourri-build-mmdebstrap.1
    podpourri-job.1
    podpourri-job-local.1
+   podpourri-job-mmdebstrap.1
    podpourri-schedule.1
    podpourri-schedule-systemd-sudo.1
    podpourri-schedule-systemd-user.1

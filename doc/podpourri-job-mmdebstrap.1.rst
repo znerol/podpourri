@@ -1,0 +1,19 @@
+podpourri-job-mmdebstrap
+========================
+
+Synopsis
+--------
+
+**podpourri-job-local** *job-tag-prefix* *repo-url*
+
+
+Description
+-----------
+
+Runs a build job by executing ``podpourri-build-mmdebstrap`` locally inside a
+temporary checked out repository. This is normally called by ``podpourri-job``.
+
+See Also
+--------
+
+:manpage:`podpourri-job(1)` :manpage:`podpourri-build-mmdebstrap(1)`
