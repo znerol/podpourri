@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# podpourri-build - Uses *podman* to build and push a container image build
-# file found at *context* directory.
+# podpourri-build-mmdebstrap - Uses *mmdebstrap* to build a reproducible base
+# image. The specified *jobtag* is used to tag the resulting image.
 
 set -eu
 

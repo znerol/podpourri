@@ -21,8 +21,8 @@ Information is derived from repository whenever possible. I.e.:
   image tag.
 
 If the file ``sources.list`` is present in the repository, packages are
-installed from the specified repositories. Defaults to the
-``/etc/apt/sources.list`` of the host system.
+installed from the specified sources. Defaults to the ``/etc/apt/sources.list``
+of the host system.
 
 If the file ``dpkg.cfg`` is present in the repository, it is passed to
 `mmdebstrap``s ``--dpkgopt`` command line flag. If not present a built-in
