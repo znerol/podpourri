@@ -10,7 +10,9 @@ Man Pages
    podpourri-job.1
    podpourri-job-local.1
    podpourri-job-mmdebstrap.1
+   podpourri-job-ssh.1
    podpourri-schedule.1
+   podpourri-schedule-ssh.1
    podpourri-schedule-systemd-sudo.1
    podpourri-schedule-systemd-user.1
    podpourri-systemctl.1

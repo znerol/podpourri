@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# podpourri-schedule-ssh - Forward setup of a schedule for automated container
+# image rebuilds to remote host via ssh.
+
+set -eu
+
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+SSH_DESTINATION="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.sshDestination)"
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: schedule repo-url"
+    return 1
+}
+
+podpourri_schedule_ssh() {
+    if [ -n "${SSH_DESTINATION}" ]; then
+        /usr/bin/env ssh "${SSH_DESTINATION}" -- podpouri-schedule "${@}"
+    else
+        echo "Podpourri: Please specify autobuild.sshDestination in podpourri.conf" >&2
+        return 1
+    fi
+}
+
+if [ "${#}" -eq 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_schedule_ssh "${@}"
+else
+    usage
+fi
