@@ -60,8 +60,11 @@ podpourri_build_mmdebstrap() {
             fi
 
             # https://reproducible-builds.org/docs/source-date-epoch/#git
+            if [ -z "${SOURCE_DATE_EPOCH}" ]; then
+                SOURCE_DATE_EPOCH="$(/usr/bin/env git log -1 --pretty=%ct)"
+            fi
             /usr/bin/env \
-                SOURCE_DATE_EPOCH="$(/usr/bin/env git log -1 --pretty=%ct)" \
+                SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
                 "${MMDEBSTRAP}" \
                 --verbose \
                 --dpkgopt="${DPKGOPT}" \
@@ -80,7 +83,7 @@ podpourri_build_mmdebstrap() {
                 /usr/bin/env "${PODMAN}" image import \
                     "${ARCHIVE}" \
                     "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" \
-                    "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
+                    "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
                 echo "Podpourri: Imported ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
 
                 if [ -n "${REGISTRY_PREFIX}" ]; then
@@ -100,9 +103,9 @@ podpourri_build_mmdebstrap() {
 
 
 # Setup temp dir.
-WORKDIR="$(${MKTEMP} -d)"
+WORKDIR="$(/usr/bin/env mktemp -d)"
 cleanup() {
-    ${RM} -rf "${WORKDIR}"
+    /usr/bin/env rm -rf "${WORKDIR}"
 }
 trap cleanup EXIT
 
