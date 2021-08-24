@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import pathlib
+import sys
+import tarfile
+import tempfile
+
+def reset(tarinfo : tarfile.TarInfo):
+    tarinfo.uid = tarinfo.gid = 0
+    tarinfo.uname = tarinfo.gname = "root"
+    tarinfo.mtime = int(os.environ["SOURCE_DATE_EPOCH"])
+    tarinfo.mode = 0o0644
+    return tarinfo
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--verbose', '-v', action='count', default=0)
+    parser.add_argument('--dpkgopt', type=pathlib.Path)
+    parser.add_argument('--variant')
+
+    args = parser.parse_args()
+
+    with tempfile.NamedTemporaryFile("w") as sources:
+        sources.write(sys.stdin.read())
+        sources.flush()
+
+        with tarfile.open(fileobj=sys.stdout.buffer, mode='w|') as archive:
+            sourcesList = reset(archive.gettarinfo(sources.name, "sources.list"))
+            archive.addfile(sourcesList, open(sources.name, "rb"))
+
+            dpkgOpt = reset(archive.gettarinfo(args.dpkgopt, "dpkg.conf"))
+            archive.addfile(dpkgOpt, open(args.dpkgopt, "rb"))
