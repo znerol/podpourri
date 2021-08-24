@@ -3,16 +3,10 @@
 import argparse
 import os
 import pathlib
+import shutil
+import subprocess
 import sys
-import tarfile
 import tempfile
-
-def reset(tarinfo : tarfile.TarInfo):
-    tarinfo.uid = tarinfo.gid = 0
-    tarinfo.uname = tarinfo.gname = "root"
-    tarinfo.mtime = int(os.environ["SOURCE_DATE_EPOCH"])
-    tarinfo.mode = 0o0644
-    return tarinfo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -22,13 +16,21 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    with tempfile.NamedTemporaryFile("w") as sources:
-        sources.write(sys.stdin.read())
-        sources.flush()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "sources.list"), "w") as sources:
+            sources.write(sys.stdin.read())
 
-        with tarfile.open(fileobj=sys.stdout.buffer, mode='w|') as archive:
-            sourcesList = reset(archive.gettarinfo(sources.name, "sources.list"))
-            archive.addfile(sourcesList, open(sources.name, "rb"))
+        shutil.copyfile(args.dpkgopt, os.path.join(tmpdir, "dpkg.cnf"))
 
-            dpkgOpt = reset(archive.gettarinfo(args.dpkgopt, "dpkg.conf"))
-            archive.addfile(dpkgOpt, open(args.dpkgopt, "rb"))
+        subprocess.check_call([
+            '/usr/bin/tar',
+            '--sort=name',
+            f'--mtime=@{os.environ["SOURCE_DATE_EPOCH"]}',
+            '--owner=0',
+            '--group=0',
+            '--numeric-owner',
+            '--pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime',
+            '-c',
+            'dpkg.cnf',
+            'sources.list',
+        ], cwd=tmpdir)

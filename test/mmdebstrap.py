@@ -98,7 +98,7 @@ class BuildTestCase(unittest.TestCase):
     def testDoesNotImportBuiltImageIfShasumMatches(self):
         epoch="1234567890"
         # correct shasum for given epoch
-        shasum="7d91525a8d5cac646a4fe6a6c12ff6d92806fb827436f9f2c22985e2dddf8b62"
+        shasum="e1a8cd773fb9663d7b2b71fd41f3e5b3c9b9302dda1c4b0c4a57f6af1126f89e"
 
         output = self._wd_cmd('podpourri-build-mmdebstrap', self.clonedir, 'jobtag-xyz',
                               self.podman_stub, self.mmdebstrap_stub, env=self._env(
