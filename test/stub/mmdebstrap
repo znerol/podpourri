@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+import tempfile
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--verbose', '-v', action='count', default=0)
+    parser.add_argument('--dpkgopt', type=pathlib.Path)
+    parser.add_argument('--variant')
+
+    args = parser.parse_args()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "sources.list"), "w") as sources:
+            sources.write(sys.stdin.read())
+
+        shutil.copyfile(args.dpkgopt, os.path.join(tmpdir, "dpkg.cnf"))
+
+        subprocess.check_call([
+            '/usr/bin/tar',
+            '--sort=name',
+            f'--mtime=@{os.environ["SOURCE_DATE_EPOCH"]}',
+            '--owner=0',
+            '--group=0',
+            '--numeric-owner',
+            '--pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime',
+            '-c',
+            'dpkg.cnf',
+            'sources.list',
+        ], cwd=tmpdir)
