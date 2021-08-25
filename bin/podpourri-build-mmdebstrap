@@ -74,8 +74,12 @@ podpourri_build_mmdebstrap() {
             ARCHIVE_DGST_OUT="$(/usr/bin/env sha256sum "${ARCHIVE}")"
             ARCHIVE_DGST="[sha256:${ARCHIVE_DGST_OUT%% *}]"
 
+            if [ -n "${REGISTRY_PREFIX}" ]; then
+                /usr/bin/env "${PODMAN}" image pull "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" || true
+            fi
+
             EXISTING_DGST=""
-            if /usr/bin/env "${PODMAN}" image pull "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"; then
+            if /usr/bin/env "${PODMAN}" image exists "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"; then
                 EXISTING_DGST="$(/usr/bin/env "${PODMAN}" image inspect --format '{{.RootFS.Layers}}' "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}")"
             fi
 

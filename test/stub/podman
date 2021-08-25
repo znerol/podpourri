@@ -5,6 +5,8 @@ import os
 
 if sys.argv[1] == 'image' and sys.argv[2] == 'build':
     print('PODMAN build called with args:', ' '.join(sys.argv[3:]))
+elif sys.argv[1] == 'image' and sys.argv[2] == 'exists':
+    print('PODMAN exists called with args:', ' '.join(sys.argv[3:]))
 elif sys.argv[1] == 'image' and sys.argv[2] == 'pull':
     print('PODMAN pull called with args:', ' '.join(sys.argv[3:]))
 elif sys.argv[1] == 'image' and sys.argv[2] == 'push':
