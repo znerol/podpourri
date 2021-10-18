@@ -17,8 +17,8 @@ podpourri_systemctl() {
     SCHEDULE="${3}"
     REPO_URL="${4}"
 
-    UNIT="$(/usr/bin/env systemd-escape --template "podpourri-build-${SCHEDULE}@.timer" "${REPO_URL}")"
-    /usr/bin/env "${SYSTEMCTL}" "${DOMAIN}" enable --now --no-ask-password "${UNIT}"
+    UNIT="$(systemd-escape --template "podpourri-build-${SCHEDULE}@.timer" "${REPO_URL}")"
+    exec "${SYSTEMCTL}" "${DOMAIN}" enable --now --no-ask-password "${UNIT}"
 }
 
 if [ "${#}" -eq 4 ] && \

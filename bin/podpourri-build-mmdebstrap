@@ -6,7 +6,7 @@
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-REGISTRY_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" registry.prefix || echo)"
+REGISTRY_PREFIX="$(git config --file "${CONFIGFILE}" registry.prefix || echo)"
 
 DPKGOPT_DEFAULT=<<EOF
 path-exclude=/usr/share/man/*
@@ -33,7 +33,7 @@ podpourri_build_mmdebstrap() {
     MMDEBSTRAP="${5}"
     shift 5
 
-    BRANCH="$(/usr/bin/env git rev-parse --abbrev-ref HEAD)"
+    BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
     case "${BRANCH}" in
         *[!a-zA-Z0-9-_.]*)
@@ -41,7 +41,7 @@ podpourri_build_mmdebstrap() {
             ;;
 
         *)
-            ORIGIN="$(/usr/bin/env git remote get-url origin)"
+            ORIGIN="$(git remote get-url origin)"
             IMAGE_NAME="${ORIGIN%/}"
             IMAGE_NAME="${IMAGE_NAME##*[:/]}"
             IMAGE_NAME="${IMAGE_NAME%.git}"
@@ -61,7 +61,7 @@ podpourri_build_mmdebstrap() {
 
             # https://reproducible-builds.org/docs/source-date-epoch/#git
             if [ -z "${SOURCE_DATE_EPOCH}" ]; then
-                SOURCE_DATE_EPOCH="$(/usr/bin/env git log -1 --pretty=%ct)"
+                SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
             fi
             /usr/bin/env \
                 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
@@ -71,30 +71,30 @@ podpourri_build_mmdebstrap() {
                 --variant=required \
                 < "${SOURCESLIST}" > "${ARCHIVE}"
 
-            ARCHIVE_DGST_OUT="$(/usr/bin/env sha256sum "${ARCHIVE}")"
+            ARCHIVE_DGST_OUT="$(sha256sum "${ARCHIVE}")"
             ARCHIVE_DGST="[sha256:${ARCHIVE_DGST_OUT%% *}]"
 
             if [ -n "${REGISTRY_PREFIX}" ]; then
-                /usr/bin/env "${PODMAN}" image pull "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" || true
+                command "${PODMAN}" image pull "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" || true
             fi
 
             EXISTING_DGST=""
-            if /usr/bin/env "${PODMAN}" image exists "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"; then
-                EXISTING_DGST="$(/usr/bin/env "${PODMAN}" image inspect --format '{{.RootFS.Layers}}' "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}")"
+            if command "${PODMAN}" image exists "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"; then
+                EXISTING_DGST="$(command "${PODMAN}" image inspect --format '{{.RootFS.Layers}}' "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}")"
             fi
 
             if [ "${ARCHIVE_DGST}" != "${EXISTING_DGST}" ]; then
-                /usr/bin/env "${PODMAN}" image import \
+                command "${PODMAN}" image import \
                     "${ARCHIVE}" \
                     "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" \
                     "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
                 echo "Podpourri: Imported ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
 
                 if [ -n "${REGISTRY_PREFIX}" ]; then
-                    /usr/bin/env "${PODMAN}" image push \
+                    command "${PODMAN}" image push \
                         "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
                     echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
-                    /usr/bin/env "${PODMAN}" image push \
+                    command "${PODMAN}" image push \
                         "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
                     echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
                 fi
@@ -107,9 +107,9 @@ podpourri_build_mmdebstrap() {
 
 
 # Setup temp dir.
-WORKDIR="$(/usr/bin/env mktemp -d)"
+WORKDIR="$(mktemp -d)"
 cleanup() {
-    /usr/bin/env rm -rf "${WORKDIR}"
+    rm -rf "${WORKDIR}"
 }
 trap cleanup EXIT
 

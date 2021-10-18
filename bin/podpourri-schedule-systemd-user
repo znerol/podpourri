@@ -12,7 +12,7 @@ usage() {
 }
 
 podpourri_schedule_systemd_user() {
-    /usr/bin/env podpourri-systemctl systemctl --user "${@}"
+    exec podpourri-systemctl systemctl --user "${@}"
 }
 
 if [ "${#}" -eq 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then

@@ -5,7 +5,7 @@
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-AUTOBUILD_METHOD="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.method || echo systemd-user)"
+AUTOBUILD_METHOD="$(git config --file "${CONFIGFILE}" autobuild.method || echo systemd-user)"
 
 # Print usage message and exit.
 usage() {
@@ -21,7 +21,7 @@ podpourri_schedule() {
             ;;
 
         *)
-            /usr/bin/env "podpourri-schedule-${AUTOBUILD_METHOD}" "${@}"
+            exec "podpourri-schedule-${AUTOBUILD_METHOD}" "${@}"
             ;;
     esac
 }

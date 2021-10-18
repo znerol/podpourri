@@ -5,7 +5,7 @@
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-SSH_DESTINATION="$(/usr/bin/env git config --file "${CONFIGFILE}" job.sshDestination)"
+SSH_DESTINATION="$(git config --file "${CONFIGFILE}" job.sshDestination)"
 
 # Print usage message and exit.
 usage() {
@@ -15,7 +15,7 @@ usage() {
 
 podpourri_job_ssh() {
     if [ -n "${SSH_DESTINATION}" ]; then
-        /usr/bin/env ssh "${SSH_DESTINATION}" -- podpouri-job "${@}"
+        exec ssh "${SSH_DESTINATION}" -- podpouri-job "${@}"
     else
         echo "Podpourri: Please specify job.sshDestination in podpourri.conf" >&2
         return 1

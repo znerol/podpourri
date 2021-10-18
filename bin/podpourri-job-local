@@ -15,7 +15,7 @@ podpourri_job_local() {
     PODPOURRI_REPO="${2}"
     shift 2
 
-    /usr/bin/env \
+    exec \
         git gau-exec "${PODPOURRI_REPO}" \
         podpourri-tag-xargs "${PODPOURRI_JOBTAG_PREFIX}" -I"{PODPOURRI_JOBTAG}" \
         git gau-at "{PODPOURRI_JOBTAG}" \
