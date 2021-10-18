@@ -89,7 +89,7 @@ class BuildTestCase(unittest.TestCase):
                               ))
 
         expect_lines = [
-            b'PODMAN pull called with args: my-container-image:latest',
+            b'PODMAN exists called with args: my-container-image:latest',
             b'PODMAN import called with args: [^ ]+\\.tar my-container-image:jobtag-xyz my-container-image:latest',
         ]
 
@@ -107,7 +107,7 @@ class BuildTestCase(unittest.TestCase):
                               ))
 
         expect_lines = [
-            b'PODMAN pull called with args: my-container-image:latest',
+            b'PODMAN exists called with args: my-container-image:latest',
         ]
 
         self.assertRegex(output, b'^' + b'\n'.join(expect_lines) + b'\n$')
