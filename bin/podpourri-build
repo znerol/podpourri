@@ -6,7 +6,7 @@
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-REGISTRY_PREFIX="$(/usr/bin/env git config --file "${CONFIGFILE}" registry.prefix || echo)"
+REGISTRY_PREFIX="$(git config --file "${CONFIGFILE}" registry.prefix || echo)"
 
 # Print usage message and exit.
 usage() {
@@ -20,29 +20,29 @@ podpourri_build() {
     PODMAN="${3}"
     shift 3
 
-    BRANCH="$(/usr/bin/env git rev-parse --abbrev-ref HEAD)"
+    BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
     case "${BRANCH}" in
         *[!a-zA-Z0-9-_.]*)
             echo "Podpourri: Invalid ref, not running build" >&2
             ;;
         *)
-            ORIGIN="$(/usr/bin/env git remote get-url origin)"
+            ORIGIN="$(git remote get-url origin)"
             IMAGE_NAME="${ORIGIN%/}"
             IMAGE_NAME="${IMAGE_NAME##*[:/]}"
             IMAGE_NAME="${IMAGE_NAME%.git}"
 
-            /usr/bin/env "${PODMAN}" image build \
+            command "${PODMAN}" image build \
                 -t "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" \
                 -t "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
                 "${@}" "${CONTEXT}"
             echo "Podpourri: Built ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
 
             if [ -n "${REGISTRY_PREFIX}" ]; then
-                /usr/bin/env "${PODMAN}" image push \
+                command "${PODMAN}" image push \
                     "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
                 echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
-                /usr/bin/env "${PODMAN}" image push \
+                command "${PODMAN}" image push \
                     "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
                 echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
             fi

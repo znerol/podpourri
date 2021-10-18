@@ -6,7 +6,7 @@
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-SSH_DESTINATION="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.sshDestination)"
+SSH_DESTINATION="$(git config --file "${CONFIGFILE}" autobuild.sshDestination)"
 
 # Print usage message and exit.
 usage() {
@@ -16,7 +16,7 @@ usage() {
 
 podpourri_schedule_ssh() {
     if [ -n "${SSH_DESTINATION}" ]; then
-        /usr/bin/env ssh "${SSH_DESTINATION}" -- podpouri-schedule "${@}"
+        exec ssh "${SSH_DESTINATION}" -- podpouri-schedule "${@}"
     else
         echo "Podpourri: Please specify autobuild.sshDestination in podpourri.conf" >&2
         return 1

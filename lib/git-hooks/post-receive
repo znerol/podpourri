@@ -8,9 +8,9 @@ set -eu
 umask 0022
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-REPO_BASEDIR="$(/usr/bin/env git config --file "${CONFIGFILE}" repo.basedir)"
-REPO_BASEURL="$(/usr/bin/env git config --file "${CONFIGFILE}" repo.baseurl)"
-AUTOBUILD_SCHEDULES="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild.schedules || echo daily weekly)"
+REPO_BASEDIR="$(git config --file "${CONFIGFILE}" repo.basedir)"
+REPO_BASEURL="$(git config --file "${CONFIGFILE}" repo.baseurl)"
+AUTOBUILD_SCHEDULES="$(git config --file "${CONFIGFILE}" autobuild.schedules || echo daily weekly)"
 
 while read -r _ _ REFNAME
 do
@@ -38,7 +38,7 @@ do
             podpourri-job "build-push-" "${REPO_URL}"
 
             for SCHEDULE in ${AUTOBUILD_SCHEDULES}; do
-                AUTOBUILD_REFS="$(/usr/bin/env git config --file "${CONFIGFILE}" autobuild."${SCHEDULE}" || echo)"
+                AUTOBUILD_REFS="$(git config --file "${CONFIGFILE}" autobuild."${SCHEDULE}" || echo)"
                 for REF in ${AUTOBUILD_REFS}; do
                     if [ "${REF}" = "${BRANCH}" ]; then
                         podpourri-schedule "${SCHEDULE}" "${REPO_URL}"

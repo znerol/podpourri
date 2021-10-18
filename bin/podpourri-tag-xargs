@@ -15,6 +15,6 @@ PREFIX="${1}"
 shift 1
 
 # Run xargs with tag generated from prefix and UUID.
-UUID=$(/usr/bin/env uuidgen -t)
+UUID=$(uuidgen -t)
 JOBTAG="${PREFIX}${UUID%%-*}"
-echo "${JOBTAG}" | /usr/bin/env xargs "${@}"
+echo "${JOBTAG}" | command xargs "${@}"
