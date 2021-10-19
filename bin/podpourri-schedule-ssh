@@ -6,7 +6,7 @@
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-SSH_DESTINATION="$(git config --file "${CONFIGFILE}" autobuild.sshDestination)"
+SSH_DESTINATION="$(git config --includes --file "${CONFIGFILE}" autobuild.sshDestination)"
 
 # Print usage message and exit.
 usage() {
