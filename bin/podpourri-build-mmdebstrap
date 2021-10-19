@@ -6,7 +6,7 @@
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-REGISTRY_PREFIX="$(git config --file "${CONFIGFILE}" registry.prefix || echo)"
+REGISTRY_PREFIX="$(git config --includes --file "${CONFIGFILE}" registry.prefix || echo)"
 
 DPKGOPT_DEFAULT=<<EOF
 path-exclude=/usr/share/man/*

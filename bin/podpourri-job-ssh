@@ -5,7 +5,7 @@
 set -eu
 
 CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-SSH_DESTINATION="$(git config --file "${CONFIGFILE}" job.sshDestination)"
+SSH_DESTINATION="$(git config --includes --file "${CONFIGFILE}" job.sshDestination)"
 
 # Print usage message and exit.
 usage() {
