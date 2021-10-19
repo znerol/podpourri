@@ -32,7 +32,7 @@ do
                 REPO_URL="${REPO_URL##${REPO_BASEDIR}}"
             fi
             if [ -n "$REPO_BASEURL" ]; then
-                REPO_URL="${REPO_URL_PREFIX}${REPO_URL}"
+                REPO_URL="${REPO_BASEURL}${REPO_URL}"
             fi
 
             podpourri-job "build-push-" "${REPO_URL}"
