@@ -1,14 +1,11 @@
 #!/bin/sh
 #
 # podpourri-build-mmdebstrap - Uses *mmdebstrap* to build a reproducible base
-# image. The specified *jobtag* is used to tag the resulting image.
+# image.
 
 set -eu
 
-CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-REGISTRY_PREFIX="$(git config --includes --file "${CONFIGFILE}" registry.prefix || echo)"
-
-DPKGOPT_DEFAULT=<<EOF
+DPKGOPT_DEFAULT="$(cat <<'EOF'
 path-exclude=/usr/share/man/*
 path-include=/usr/share/man/man[1-9]/*
 path-exclude=/usr/share/locale/*
@@ -18,103 +15,76 @@ path-include=/usr/share/doc/*/copyright
 path-exclude=/usr/share/lintian/*
 path-exclude=/usr/share/linda/*
 EOF
+)"
 
 # Print usage message and exit.
 usage() {
-    echo "${0}: context jobtag podman mmdebstrap"
+    echo "${0}: context config-name image-tag"
     return 1
 }
 
 podpourri_build_mmdebstrap() {
-    WORKDIR="${1}"
-    CONTEXT="${2}"
-    JOBTAG="${3}"
-    PODMAN="${4}"
-    MMDEBSTRAP="${5}"
-    shift 5
+    CONTEXT="${1}"
+    CONFIG_NAME="${2}"
+    IMAGE_TAG="${3}"
+    shift 3
 
-    BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    REPOCONFIG="${CONTEXT}/.podpourri.conf"
 
-    case "${BRANCH}" in
-        *[!a-zA-Z0-9-_.]*)
-            echo "Podpourri: Invalid ref, not running build" >&2
-            ;;
+    DPKGOPT="$(git config --file "${REPOCONFIG}" --type path --get "podpourri-image.${CONFIG_NAME}.dpkgOptFile" || echo)"
+    SOURCESLIST="$(git config --file "${REPOCONFIG}" --type path --get "podpourri-image.${CONFIG_NAME}.aptSourcesFile" || echo "/etc/apt/sources.list")"
 
-        *)
-            ORIGIN="$(git remote get-url origin)"
-            IMAGE_NAME="${ORIGIN%/}"
-            IMAGE_NAME="${IMAGE_NAME##*[:/]}"
-            IMAGE_NAME="${IMAGE_NAME%.git}"
+    # Setup temp dir.
+    ARCHIVE="$(mktemp)"
+    cleanup() {
+        rm -f "${ARCHIVE}"
+    }
+    trap cleanup EXIT
 
-            ARCHIVE="${WORKDIR}/root.tar"
+    if [ -z "${DPKGOPT}" ]; then
+        # File needs to be accessible from unshared user namespace. Make it
+        # world readable.
+        DPKGOPT="$(mktemp)"
+        chmod 0644 "${DPKGOPT}"
+        cleanup() {
+            rm -f "${DPKGOPT}"
+            rm -f "${ARCHIVE}"
+        }
+        trap cleanup EXIT
+        echo "${DPKGOPT_DEFAULT}" > "${DPKGOPT}"
+    fi
 
-            DPKGOPT="${CONTEXT}/dpkg.cfg"
-            if [ ! -e "${DPKGOPT}" ]; then
-                DPKGOPT="${WORKDIR}/dpkg.cfg"
-                echo "${DPKGOPT_DEFAULT}" > "${DPKGOPT}"
-            fi
+    # https://reproducible-builds.org/docs/source-date-epoch/#git
+    if [ -z "${SOURCE_DATE_EPOCH:-}" ]; then
+        SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
+    fi
+    (cd "${CONTEXT}" && exec /usr/bin/env \
+        SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
+        mmdebstrap \
+        --verbose \
+        --dpkgopt="${DPKGOPT}" \
+        --variant=required \
+        < "${SOURCESLIST}" > "${ARCHIVE}"
+    )
 
-            SOURCESLIST="${CONTEXT}/sources.list"
-            if [ ! -e "${SOURCESLIST}" ]; then
-                SOURCESLIST="/etc/apt/sources.list"
-            fi
+    ARCHIVE_DGST_OUT="$(sha256sum "${ARCHIVE}")"
+    ARCHIVE_DGST="[sha256:${ARCHIVE_DGST_OUT%% *}]"
 
-            # https://reproducible-builds.org/docs/source-date-epoch/#git
-            if [ -z "${SOURCE_DATE_EPOCH}" ]; then
-                SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
-            fi
-            /usr/bin/env \
-                SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
-                "${MMDEBSTRAP}" \
-                --verbose \
-                --dpkgopt="${DPKGOPT}" \
-                --variant=required \
-                < "${SOURCESLIST}" > "${ARCHIVE}"
+    EXISTING_DGST=""
+    if command podman image exists "${IMAGE_TAG}"; then
+        EXISTING_DGST="$(command podman image inspect --format '{{.RootFS.Layers}}' "${IMAGE_TAG}")"
+    fi
 
-            ARCHIVE_DGST_OUT="$(sha256sum "${ARCHIVE}")"
-            ARCHIVE_DGST="[sha256:${ARCHIVE_DGST_OUT%% *}]"
-
-            if [ -n "${REGISTRY_PREFIX}" ]; then
-                command "${PODMAN}" image pull "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" || true
-            fi
-
-            EXISTING_DGST=""
-            if command "${PODMAN}" image exists "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"; then
-                EXISTING_DGST="$(command "${PODMAN}" image inspect --format '{{.RootFS.Layers}}' "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}")"
-            fi
-
-            if [ "${ARCHIVE_DGST}" != "${EXISTING_DGST}" ]; then
-                command "${PODMAN}" image import \
-                    "${ARCHIVE}" \
-                    "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" \
-                    "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
-                echo "Podpourri: Imported ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
-
-                if [ -n "${REGISTRY_PREFIX}" ]; then
-                    command "${PODMAN}" image push \
-                        "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
-                    echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
-                    command "${PODMAN}" image push \
-                        "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
-                    echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
-                fi
-            else
-                echo "Podpourri: Image is up-to-date: ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
-            fi
-            ;;
-    esac
+    if [ "${ARCHIVE_DGST}" != "${EXISTING_DGST}" ]; then
+        command podman image import "${ARCHIVE}" "${IMAGE_TAG}"
+        echo "Podpourri: Imported ${IMAGE_TAG}" >&2
+    else
+        echo "Podpourri: Image is up-to-date: ${IMAGE_TAG}" >&2
+    fi
 }
 
-
-# Setup temp dir.
-WORKDIR="$(mktemp -d)"
-cleanup() {
-    rm -rf "${WORKDIR}"
-}
-trap cleanup EXIT
-
-if [ "${#}" -gt 3 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
-    podpourri_build_mmdebstrap "${WORKDIR}" "${@}"
+if [ "${#}" -gt 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_build_mmdebstrap "${@}"
 else
     usage
 fi

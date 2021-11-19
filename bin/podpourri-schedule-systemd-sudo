@@ -12,7 +12,7 @@ usage() {
 }
 
 podpourri_schedule_systemd_sudo() {
-    exec sudo -n podpourri-systemctl systemctl --system "${@}"
+    exec sudo -n podpourri-systemctl --system "${@}"
 }
 
 if [ "${#}" -eq 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then

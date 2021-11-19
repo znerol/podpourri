@@ -7,107 +7,136 @@ import tempfile
 import unittest
 
 
-class BuildTestCase(unittest.TestCase):
-    podman_stub = ''
-    mmdebstrap_stub = ''
-    stubdir = ''
+class BuildMmdebstrapTestCase(unittest.TestCase):
     workdir = None
     repodir = None
-    clonedir = None
-    homedir = None
     env = {}
 
     def setUp(self):
-        self.stubdir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'stub',
-        )
-        self.podman_stub = os.path.join(self.stubdir, 'podman')
-        self.mmdebstrap_stub = os.path.join(self.stubdir, 'mmdebstrap')
-
         self.workdir = tempfile.mkdtemp()
-        self.repodir = os.path.join(self.workdir, 'my-container-image')
+        self.repodir = os.path.join(self.workdir, 'my-image-repo')
 
         os.mkdir(self.repodir)
 
-        self._repo_cmd('git', 'init', '--bare', '-b', 'latest')
+        self._repo_cmd('git', 'init', '-b', 'latest')
+        self._repo_cmd('git', 'config', 'user.name', 'Test')
+        self._repo_cmd('git', 'config', 'user.email', 'test@localFst')
+        self._repo_cmd('git', 'commit', '--quiet',
+                       '--allow-empty', '-m', 'Initial commit')
 
-        self.clonedir = os.path.join(self.workdir, 'wd')
-        clonecmd = ['git', 'clone', '--quiet', self.repodir, self.clonedir]
-        subprocess.check_call(clonecmd)
-
-        shutil.copyfile(
-            os.path.join(self.stubdir, 'scratch', 'dpkg.cfg'),
-            os.path.join(self.clonedir, 'dpkg.cfg')
+        bin_stub = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'stub',
+            'bin'
         )
-        shutil.copyfile(
-            os.path.join(self.stubdir, 'scratch', 'sources.list'),
-            os.path.join(self.clonedir, 'sources.list')
-        )
-        self._wd_cmd('git', 'config', 'user.name', 'Test')
-        self._wd_cmd('git', 'config', 'user.email', 'test@localhost')
-        self._wd_cmd('git', 'add', 'sources.list', 'dpkg.cfg')
-        self._wd_cmd('git', 'branch', '-m', 'latest')
-        self._wd_cmd('git', 'commit', '-m', 'Add sources.list and dpkg.cfg')
-        self._wd_cmd('git', 'push', '--quiet', 'origin', 'HEAD')
 
-        self.homedir = os.path.join(self.workdir, 'home')
-        os.mkdir(self.homedir)
+        self.env = os.environ.copy()
+        self.env.update({
+            'PATH': f"{bin_stub}:{self.env['PATH']}",
+        })
 
     def tearDown(self):
         if self.workdir is not None:
             shutil.rmtree(self.workdir)
 
-    def _env(self, **kwds):
-        env = os.environ.copy()
-        if self.homedir:
-            env.update({
-                'HOME': self.homedir
-            })
-        env.update(kwds)
-        return env
-
     def _repo_cmd(self, *args, **kwds):
         kwds.setdefault('cwd', self.repodir)
-        kwds.setdefault('env', self._env())
-        return subprocess.check_output(args, **kwds)
-
-    def _wd_cmd(self, *args, **kwds):
-        kwds.setdefault('cwd', self.clonedir)
-        kwds.setdefault('env', self._env())
+        kwds.setdefault('env', self.env)
         return subprocess.check_output(args, **kwds)
 
     def testCallsMmdebstrapdWithoutPush(self):
+        shutil.copyfile(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'stub',
+                'scratch',
+                'dpkg.cfg'
+            ),
+            os.path.join(self.repodir, "dpkg.cfg")
+        )
+        shutil.copyfile(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'stub',
+                'scratch',
+                'sources.list'
+            ),
+            os.path.join(self.repodir, "sources.list")
+        )
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                "[podpourri-image \"my-container-image\"]",
+                "    method = mmdebstrap",
+                "    aptSourcesFile = sources.list",
+                "    dpkgOptFile = dpkg.cfg",
+            ]), file=fp)
+
         epoch="1234567890"
         # incorrect shasum for given epoch
         shasum="0123456789abcdef"
 
-        output = self._wd_cmd('podpourri-build-mmdebstrap', self.clonedir, 'jobtag-xyz',
-                              self.podman_stub, self.mmdebstrap_stub, env=self._env(
+        output = self._repo_cmd('podpourri-build', self.repodir, 'jobtag-xyz',
+                              env=dict(
+                                  **self.env,
                                   SOURCE_DATE_EPOCH=epoch,
                                   PODMAN_STUB_SHA256_SUM=shasum
                               ))
 
         expect_lines = [
             b'PODMAN exists called with args: my-container-image:latest',
-            b'PODMAN import called with args: [^ ]+\\.tar my-container-image:jobtag-xyz my-container-image:latest',
+            b'PODMAN import called with args: [^ ]+ my-container-image:latest',
+            b'PODMAN tag called with args: my-container-image:latest my-container-image:jobtag-xyz',
         ]
 
         self.assertRegex(output, b'^' + b'\n'.join(expect_lines) + b'\n$')
 
     def testDoesNotImportBuiltImageIfShasumMatches(self):
+        shutil.copyfile(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'stub',
+                'scratch',
+                'dpkg.cfg'
+            ),
+            os.path.join(self.repodir, "dpkg.cfg")
+        )
+        shutil.copyfile(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'stub',
+                'scratch',
+                'sources.list'
+            ),
+            os.path.join(self.repodir, "sources.list")
+        )
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                "[podpourri-image \"my-container-image\"]",
+                "    method = mmdebstrap",
+                "    aptSourcesFile = sources.list",
+                "    dpkgOptFile = dpkg.cfg",
+            ]), file=fp)
+
         epoch="1234567890"
         # correct shasum for given epoch
         shasum="e1a8cd773fb9663d7b2b71fd41f3e5b3c9b9302dda1c4b0c4a57f6af1126f89e"
 
-        output = self._wd_cmd('podpourri-build-mmdebstrap', self.clonedir, 'jobtag-xyz',
-                              self.podman_stub, self.mmdebstrap_stub, env=self._env(
+        output = self._repo_cmd('podpourri-build', self.repodir, 'jobtag-xyz',
+                              env=dict(
+                                  **self.env,
                                   SOURCE_DATE_EPOCH=epoch,
                                   PODMAN_STUB_SHA256_SUM=shasum
                               ))
 
         expect_lines = [
             b'PODMAN exists called with args: my-container-image:latest',
+            b'PODMAN tag called with args: my-container-image:latest my-container-image:jobtag-xyz',
         ]
 
         self.assertRegex(output, b'^' + b'\n'.join(expect_lines) + b'\n$')

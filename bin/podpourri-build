@@ -1,55 +1,82 @@
 #!/bin/sh
 #
-# podpourri-build - Uses *podman* to build and push a container image build
-# file found at *context* directory.
+# podpourri-build - Builds all images specified in .podpourri.conf found at the
+# root of the checked out git working directory.
 
 set -eu
 
-CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
-REGISTRY_PREFIX="$(git config --includes --file "${CONFIGFILE}" registry.prefix || echo)"
-
 # Print usage message and exit.
 usage() {
-    echo "${0}: context jobtag podman [podman args...]"
+    echo "${0}: context jobtag"
     return 1
 }
 
 podpourri_build() {
     CONTEXT="${1}"
     JOBTAG="${2}"
-    PODMAN="${3}"
-    shift 3
+    shift 2
 
-    BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    REPOCONFIG="${CONTEXT}/.podpourri.conf"
 
-    case "${BRANCH}" in
-        *[!a-zA-Z0-9-_.]*)
-            echo "Podpourri: Invalid ref, not running build" >&2
-            ;;
-        *)
-            ORIGIN="$(git remote get-url origin)"
-            IMAGE_NAME="${ORIGIN%/}"
-            IMAGE_NAME="${IMAGE_NAME##*[:/]}"
-            IMAGE_NAME="${IMAGE_NAME%.git}"
+    if [ -f "${REPOCONFIG}" ]; then
 
-            command "${PODMAN}" image build \
-                -t "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" \
-                -t "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
-                "${@}" "${CONTEXT}"
-            echo "Podpourri: Built ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
+        BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
-            if [ -n "${REGISTRY_PREFIX}" ]; then
-                command "${PODMAN}" image push \
-                    "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
-                echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
-                command "${PODMAN}" image push \
-                    "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
-                echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
-            fi
-    esac
+        case "${BRANCH}" in
+            *[!a-zA-Z0-9-_.]*)
+                echo "Podpourri: Invalid ref, not running build" >&2
+                ;;
+            *)
+                REGISTRY_PREFIX="$(git config --file "${REPOCONFIG}" --get podpourri.registryPrefix || echo)"
+
+                PULLS="$(git config --file "${REPOCONFIG}" --get-all podpourri.pull || echo)"
+                for IMAGE_NAME in ${PULLS}; do
+                    command podman image pull "$IMAGE_NAME"
+                    echo "Podpourri: Pulled ${IMAGE_NAME}" >&2
+                done
+
+                IMAGES="$(git config --file "${REPOCONFIG}" --get-all podpourri.image || echo)"
+
+                for IMAGE_NAME in ${IMAGES}; do
+                    BUILD_METHOD="$(git config --file "${REPOCONFIG}" --get "podpourri-image.${IMAGE_NAME}.method" || echo "podman")"
+
+                    DEFAULT_CACHE="false"
+                    if [ "${BUILD_METHOD}" = "mmdebstrap" ]; then
+                        DEFAULT_CACHE="true"
+                    fi
+
+                    BUILD_CACHE="$(git config --file "${REPOCONFIG}" --type bool --get "podpourri-image.${IMAGE_NAME}.cache" || echo "${DEFAULT_CACHE}")"
+                    if [ "${BUILD_CACHE}" = "true" ] && [ -n "${REGISTRY_PREFIX}" ]; then
+                        command podman image pull \
+                          "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" || true
+                        echo "Podpourri: Pulled build cache from ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
+                    fi
+
+                    command "podpourri-build-${BUILD_METHOD}" \
+                      "${CONTEXT}" \
+                      "${IMAGE_NAME}" \
+                      "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
+
+                    command podman image tag \
+                        "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
+                        "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
+                    echo "Podpourri: Tagged ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
+
+                    if [ -n "${REGISTRY_PREFIX}" ]; then
+                        command podman image push \
+                            "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
+                        echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
+
+                        command podman image push \
+                            "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
+                        echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
+                    fi
+                done
+        esac
+    fi
 }
 
-if [ "${#}" -gt 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+if [ "${#}" -gt 1 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
     podpourri_build "${@}"
 else
     usage
