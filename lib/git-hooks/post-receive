@@ -7,7 +7,7 @@ set -eu
 
 umask 0022
 
-CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.job.conf"
 REPO_BASEDIR="$(git config --includes --file "${CONFIGFILE}" repo.basedir)"
 REPO_BASEURL="$(git config --includes --file "${CONFIGFILE}" repo.baseurl)"
 AUTOBUILD_SCHEDULES="$(git config --includes --file "${CONFIGFILE}" autobuild.schedules || echo daily weekly)"

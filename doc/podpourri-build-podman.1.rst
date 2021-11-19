@@ -1,16 +1,16 @@
-podpourri-build-mmdebstrap
-==========================
+podpourri-build-podman
+======================
 
 Synopsis
 --------
 
-**podpourri-build-mmdebstrap** *context* *config-name* *image-tag*
+**podpourri-build-podman** *context* *config-name* *image-tag*
 
 
 Description
 -----------
 
-Uses ``mmdebstrap`` to build a reproducible base image. Uses configuration from
+Runs ``podman`` to build an image. Uses configuration from
 ``podpourri-image.<config-name>`` subsection in ``.podpourri.conf`` file found
 in the *context* directory.
 

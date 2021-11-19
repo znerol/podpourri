@@ -146,10 +146,10 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('podpourri-build.1', 'podpourri-build', 'Podpourri Documentation', [author], 1),
+    ('podpourri-build-podman.1', 'podpourri-build-podman', 'Podpourri Documentation', [author], 1),
     ('podpourri-build-mmdebstrap.1', 'podpourri-build-mmdebstrap', 'Podpourri Documentation', [author], 1),
     ('podpourri-job.1', 'podpourri-job', 'Podpourri Documentation', [author], 1),
     ('podpourri-job-local.1', 'podpourri-job-local', 'Podpourri Documentation', [author], 1),
-    ('podpourri-job-mmdebstrap.1', 'podpourri-job-mmdebstrap', 'Podpourri Documentation', [author], 1),
     ('podpourri-job-ssh.1', 'podpourri-job-ssh', 'Podpourri Documentation', [author], 1),
     ('podpourri-schedule.1', 'podpourri-schedule', 'Podpourri Documentation', [author], 1),
     ('podpourri-schedule-ssh.1', 'podpourri-schedule-ssh', 'Podpourri Documentation', [author], 1),
@@ -157,6 +157,7 @@ man_pages = [
     ('podpourri-schedule-systemd-user.1', 'podpourri-schedule-systemd-user', 'Podpourri Documentation', [author], 1),
     ('podpourri-systemctl.1', 'podpourri-systemctl', 'Podpourri Documentation', [author], 1),
     ('podpourri-tag-xargs.1', 'podpourri-tag-xargs', 'Podpourri Documentation', [author], 1),
+    ('podpourri.job.conf.5', 'podpourri.job.conf', 'Podpourri Documentation', [author], 5),
     ('podpourri.conf.5', 'podpourri.conf', 'Podpourri Documentation', [author], 5),
     ('podpourri-build@.service.8', 'podpourri-build@.service', 'Podpourri Documentation', [author], 8),
     ('podpourri-hook-post-receive.8', 'podpourri-hook-post-receive', 'Podpourri Documentation', [author], 8),

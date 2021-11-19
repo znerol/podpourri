@@ -1,22 +1,35 @@
-podpourri.conf
-==============
+.podpourri.conf
+===============
 
 Description
 -----------
 
 When building container images ``podpourri-build`` will read configuration from
-*$HOME/.config/podpourri/podpourri.conf* file if it exists.
+*./podpourri.conf* at the base of the given ``context``.
 
 The configuration file uses the same syntax as ``git-config``. In fact,
-``git-config`` is internally used by ``podpourri-build`` to read the config,
-hence that tool can also be used to query and write the ``podpourri.conf``
+``git-config`` is internally used by ``podpourri`` binaries to read the config,
+hence that tool can also be used to query and write the ``podpourri.job.conf``
 file.
 
-The following variables can be set in ``podpourri.conf`` which influence the
+The following variables can be set in ``.podpourri.conf`` which influence the
 behavior of podpourri:
 
+Section ``podpourri``:
 
-.. confvalue:: registry.prefix
+.. confValue:: podpourri.image
+
+   Name of an image to be built. This option can be repeated multiple times in
+   order to build multiple images from the same repository in one job.
+   Additional details for individual image builds can be specified in
+   ``podpourri-image`` subsections where subsection name is the image name.
+
+.. confValue:: podpourri.pull
+
+   Name of an image which should be pulled before the build. This option can be
+   repeated multiple times in order to pull multiple images.
+
+.. confvalue:: podpourri.registryPrefix
 
    Prefix for all images built by ``podpourri-build``. When set, images built
    will be pushed to that container image registry after the build. Note that
@@ -24,57 +37,77 @@ behavior of podpourri:
    registry running on localhost on port 5000, use the following value:
    ``localhost:5000/``. Empty by default.
 
-.. confvalue:: repo.basedir
+Subsection ``podpourri-image``:
 
-   Base directory of repository hosting service. The base directory is removed
-   from the PWD during execution of ``post-receive`` hook. Empty by default.
+.. confValue:: ``podpourri-image.<name>.method``
 
-.. confvalue:: repo.baseurl
+   Method used to build an image. Possible values are ``podman`` (the default
+   when empty) and ``mmdebstrap``.
 
-   Public base url of the repository hosting service. The base url is prepended
-   after ``repo.basedir`` has been removed to generate the public repo url.
-   Empty by default.
+.. confValue:: ``podpourri-image.<name>.cache``
 
-.. confvalue:: job.method
+   Whether or not it is attempted to pull the image from the registry before the
+   build. Default depends on the build method: ``false`` for ``podman`` and
+   ``true`` for ``mmdebstrap``.
 
-   Method used to execute a build job. Possible values are ``local`` (the
-   default when empty) and ``ssh``.
+Subsection ``podpourri-image`` additional options if ``method`` is ``podman``:
 
-.. confvalue:: job.sshDestination
+.. confValue:: ``podpourri-image.<name>.context``
 
-   Required if ``job.method`` is set to ``ssh``. The remote (``user@host``)
-   where ``podman-job`` will be run.
+   Build context to use. Defaults to the project root directory.
 
-.. confvalue:: autobuild.schedules
+.. confValue:: ``podpourri-image.<name>.containerfile``
 
-   List of build schedules. Defaults to ``daily weekly``.
+   Containerfile / Dockerfile to use. Defaults to the build context.
 
-.. confvalue:: autobuild.daily
+Subsection ``podpourri-image`` additional options if ``method`` is
+``mmdebstrap``:
 
-   Space separated list of branches which should be scheduled for daily
-   automated rebuild. Empty by default.
+.. confValue:: ``podpourri-image.<name>.dpkgOptFile``
 
-.. confvalue:: autobuild.weekly
+   A file containing default options for dpkg. Defaults to a file with the
+   following contents:
 
-   Space separated list of branches which should be scheduled for weekly
-   automated rebuild. Empty by default.
+      path-exclude=/usr/share/man/*
+      path-include=/usr/share/man/man[1-9]/*
+      path-exclude=/usr/share/locale/*
+      path-include=/usr/share/locale/locale.alias
+      path-exclude=/usr/share/{doc,info,man,omf,help,gnome/help}/*
+      path-include=/usr/share/doc/*/copyright
+      path-exclude=/usr/share/lintian/*
+      path-exclude=/usr/share/linda/*
 
-.. confvalue:: autobuild.method
+.. confValue:: ``podpourri-image.<name>.aptSourcesFile``
 
-   Method used to schedule the autobuild timer. Possible values are
-   ``systemd-user`` (the default when empty) or ``systemd-sudo``. The latter
-   will use ``sudo podpourri-systemctl systemctl --system ...``. Hence the
-   calling user needs permission to execute the ``podpourri-systemctl`` script
-   with root privileges and without a password. E.g.:
+   A ``sources.list`` file used by ``apt`` to install packages from. Defaults to
+   ``/etc/apt/sources.list`` of the host machine.
 
-      podpourri   ALL = NOPASSWD: /usr/local/bin/podpourri-systemctl
 
-   Defaults to ``systemd-user``.
+Examples
+========
 
-.. confvalue:: autobuild.sshDestination
+With the following ``.podpourri.conf`` one image with the name ``simple`` is
+built using a ``Containerfile`` / ``Dockerfile`` at the repository root:
 
-   Required if ``job.method`` is set to ``ssh``. The remote (``user@host``)
-   where ``podman-schedule`` will be run.
+   [podpourri]
+      image = simple
+
+With the following ``.podpourri.conf`` file two images are built ``myapp-ui``
+and ``myapp-api``. If successfull, they get pushed to ``registry.example.com``.
+
+   [podpourri]
+      registryPrefix = registry.example.com/
+      image = myapp-api
+      image = myapp-ui
+
+   [podpourri-image "myapp-api"]
+      context = app
+      containerfile = app/Containerfile.api
+
+   [podpourri-image "myapp-ui"]
+      context = app
+      containerfile = app/Containerfile.ui
+
 
 See Also
 --------

@@ -4,7 +4,7 @@
 
 set -eu
 
-CONFIGFILE="${HOME}/.config/podpourri/podpourri.conf"
+CONFIGFILE="${HOME}/.config/podpourri/podpourri.job.conf"
 JOB_METHOD="$(git config --includes --file "${CONFIGFILE}" job.method || echo local)"
 
 # Print usage message and exit.
