@@ -2,7 +2,7 @@ import subprocess
 import unittest
 
 
-class XargsTestCase(unittest.TestCase):
+class TagXargsTestCase(unittest.TestCase):
 
     def testCallsSubcommandWithTagPrefix(self):
         cmd = ['podpourri-tag-xargs', 'pfx-', 'echo']

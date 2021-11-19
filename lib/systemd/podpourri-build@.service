@@ -4,6 +4,6 @@ Documentation=man:podpourri-build
 
 [Service]
 ExecStart=/usr/bin/env \
-    podpourri-job ${PODPOURRI_JOBTAG_PREFIX} ${PODPOURRI_REPO} $PODPOURRI_BUILD_ARGS
+    podpourri-job ${PODPOURRI_JOBTAG_PREFIX} ${PODPOURRI_REPO}
 
 SyslogIdentifier=podpourri-build

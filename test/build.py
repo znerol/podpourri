@@ -5,23 +5,14 @@ import tempfile
 import unittest
 
 
-class BuildTestCase(unittest.TestCase):
-    podman_stub = ''
+class BuildPodmanTestCase(unittest.TestCase):
     workdir = None
     repodir = None
-    clonedir = None
-    homedir = None
     env = {}
 
     def setUp(self):
-        self.podman_stub = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'stub',
-            'podman'
-        )
-
         self.workdir = tempfile.mkdtemp()
-        self.repodir = os.path.join(self.workdir, 'my-container-image')
+        self.repodir = os.path.join(self.workdir, 'my-image-repo')
 
         os.mkdir(self.repodir)
 
@@ -31,16 +22,15 @@ class BuildTestCase(unittest.TestCase):
         self._repo_cmd('git', 'commit', '--quiet',
                        '--allow-empty', '-m', 'Initial commit')
 
-        self.clonedir = os.path.join(self.workdir, 'wd')
-        clonecmd = ['git', 'clone', '--quiet', self.repodir, self.clonedir]
-        subprocess.check_call(clonecmd)
-
-        self.homedir = os.path.join(self.workdir, 'home')
-        os.mkdir(self.homedir)
+        bin_stub = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'stub',
+            'bin'
+        )
 
         self.env = os.environ.copy()
         self.env.update({
-            'HOME': self.homedir
+            'PATH': f"{bin_stub}:{self.env['PATH']}",
         })
 
     def tearDown(self):
@@ -52,38 +42,41 @@ class BuildTestCase(unittest.TestCase):
         kwds.setdefault('env', self.env)
         return subprocess.check_output(args, **kwds)
 
-    def _wd_cmd(self, *args, **kwds):
-        kwds.setdefault('cwd', self.clonedir)
-        kwds.setdefault('env', self.env)
-        return subprocess.check_output(args, **kwds)
-
     def testCallsPodmanBuildWithoutPush(self):
-        output = self._wd_cmd('podpourri-build', 'context', 'jobtag-xyz',
-                              self.podman_stub, '--build-arg=X=Y', '--jobs=0')
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+            ]), file=fp)
+
+        output = self._repo_cmd(
+            'podpourri-build', self.repodir, 'jobtag-xyz')
 
         expect_lines = [
-            b'PODMAN build called with args: -t my-container-image:jobtag-xyz -t my-container-image:latest --build-arg=X=Y --jobs=0 context',
-            b''
+            f'PODMAN build called with args: -t my-container-image:latest {self.repodir}/',
+            'PODMAN tag called with args: my-container-image:latest my-container-image:jobtag-xyz',
+            ''
         ]
 
-        self.assertEqual(output, b'\n'.join(expect_lines))
+        self.assertEqual(output, '\n'.join(expect_lines).encode())
 
     def testCallsPodmanBuildAndPodmanPush(self):
-        confdir = os.path.join(self.homedir, '.config', 'podpourri')
-        configfile = os.path.join(confdir, 'podpourri.conf')
-        confcmd = ['git', 'config', '--file', configfile,
-                   'registry.prefix', 'registry.example.com/path/']
-        os.makedirs(confdir)
-        subprocess.check_call(confcmd)
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "    registryPrefix = registry.example.com/path/",
+            ]), file=fp)
 
-        output = self._wd_cmd('podpourri-build', 'context', 'jobtag-xyz',
-                              self.podman_stub, '--build-arg=X=Y', '--jobs=0')
+        output = self._repo_cmd(
+            'podpourri-build', self.repodir, 'jobtag-xyz')
 
         expect_lines = [
-            b'PODMAN build called with args: -t registry.example.com/path/my-container-image:jobtag-xyz -t registry.example.com/path/my-container-image:latest --build-arg=X=Y --jobs=0 context',
-            b'PODMAN push called with args: registry.example.com/path/my-container-image:jobtag-xyz',
-            b'PODMAN push called with args: registry.example.com/path/my-container-image:latest',
-            b''
+            f'PODMAN build called with args: -t registry.example.com/path/my-container-image:latest {self.repodir}/',
+            'PODMAN tag called with args: registry.example.com/path/my-container-image:latest registry.example.com/path/my-container-image:jobtag-xyz',
+            'PODMAN push called with args: registry.example.com/path/my-container-image:jobtag-xyz',
+            'PODMAN push called with args: registry.example.com/path/my-container-image:latest',
+            ''
         ]
 
-        self.assertEqual(output, b'\n'.join(expect_lines))
+        self.assertEqual(output, '\n'.join(expect_lines).encode())

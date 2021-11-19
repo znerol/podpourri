@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# podpourri-build - Uses *podman* to build and push a container image.
+
+set -eu
+
+# Print usage message and exit.
+usage() {
+    echo "${0}: context config-name image-tag"
+    return 1
+}
+
+podpourri_build() {
+    CONTEXT="${1}"
+    CONFIG_NAME="${2}"
+    IMAGE_TAG="${3}"
+    shift 3
+
+    REPOCONFIG="${CONTEXT}/.podpourri.conf"
+
+    BUILDCONTEXT="$(git config --file "${REPOCONFIG}" --get "podpourri-image.${CONFIG_NAME}.context" || echo)"
+    CONTAINERFILE="$(git config --file "${REPOCONFIG}" --get "podpourri-image.${CONFIG_NAME}.containerfile" || echo)"
+
+    if [ -n "${CONTAINERFILE}" ]; then
+        command podman image build \
+            -t "${IMAGE_TAG}" \
+            -f "${CONTEXT}/${CONTAINERFILE}" \
+            "${CONTEXT}/${BUILDCONTEXT}"
+        echo "Podpourri: Built ${IMAGE_TAG} using ${CONTEXT}/${CONTAINERFILE} in ${CONTEXT}/${BUILDCONTEXT}" >&2
+    else
+        command podman image build \
+            -t "${IMAGE_TAG}" \
+            "${CONTEXT}/${BUILDCONTEXT}"
+        echo "Podpourri: Built ${IMAGE_TAG} in ${CONTEXT}/${BUILDCONTEXT}" >&2
+    fi
+}
+
+if [ "${#}" -gt 2 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+    podpourri_build "${@}"
+else
+    usage
+fi

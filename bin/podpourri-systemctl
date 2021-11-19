@@ -12,19 +12,17 @@ usage() {
 }
 
 podpourri_systemctl() {
-    SYSTEMCTL="${1}"
-    DOMAIN="${2}"
-    SCHEDULE="${3}"
-    REPO_URL="${4}"
+    DOMAIN="${1}"
+    SCHEDULE="${2}"
+    REPO_URL="${3}"
 
     UNIT="$(systemd-escape --template "podpourri-build-${SCHEDULE}@.timer" "${REPO_URL}")"
-    exec "${SYSTEMCTL}" "${DOMAIN}" enable --now --no-ask-password "${UNIT}"
+    exec systemctl "${DOMAIN}" enable --now --no-ask-password "${UNIT}"
 }
 
-if [ "${#}" -eq 4 ] && \
-    [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ] && \
-    { [ "${2:-}" = "--user" ] || [ "${2:-}" = "--system" ]; } && \
-    { [ "${3:-}" = "daily" ] || [ "${3:-}" = "weekly" ]; }; then
+if [ "${#}" -eq 3 ] && \
+    { [ "${1:-}" = "--user" ] || [ "${1:-}" = "--system" ]; } && \
+    { [ "${2:-}" = "daily" ] || [ "${2:-}" = "weekly" ]; }; then
     podpourri_systemctl "${@}"
 else
     usage

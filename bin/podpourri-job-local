@@ -20,7 +20,7 @@ podpourri_job_local() {
         podpourri-tag-xargs "${PODPOURRI_JOBTAG_PREFIX}" -I"{PODPOURRI_JOBTAG}" \
         git gau-at "{PODPOURRI_JOBTAG}" \
         git gau-xargs -I"{WORKDIR}" \
-        podpourri-build "{WORKDIR}" "{PODPOURRI_JOBTAG}" podman "${@}"
+        podpourri-build "{WORKDIR}" "{PODPOURRI_JOBTAG}"
 }
 
 if [ "${#}" -gt 1 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then

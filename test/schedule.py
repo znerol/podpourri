@@ -63,7 +63,7 @@ class ScheduleSystemdTestCase(unittest.TestCase):
 
     def testCallsConfiguredMethodIfBranchEnabled(self):
         confdir = os.path.join(self.homedir, '.config', 'podpourri')
-        configfile = os.path.join(confdir, 'podpourri.conf')
+        configfile = os.path.join(confdir, 'podpourri.job.conf')
         confcmds = [
             ['git', 'config', '--file', configfile,
              'autobuild.method', 'stub'],

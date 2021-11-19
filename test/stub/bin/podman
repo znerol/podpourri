@@ -5,6 +5,8 @@ import os
 
 if sys.argv[1] == 'image' and sys.argv[2] == 'build':
     print('PODMAN build called with args:', ' '.join(sys.argv[3:]))
+elif sys.argv[1] == 'image' and sys.argv[2] == 'tag':
+    print('PODMAN tag called with args:', ' '.join(sys.argv[3:]))
 elif sys.argv[1] == 'image' and sys.argv[2] == 'exists':
     print('PODMAN exists called with args:', ' '.join(sys.argv[3:]))
 elif sys.argv[1] == 'image' and sys.argv[2] == 'pull':
@@ -16,4 +18,5 @@ elif sys.argv[1] == 'image' and sys.argv[2] == 'import':
 elif sys.argv[1] == 'image' and sys.argv[2] == 'inspect' and sys.argv[3] == '--format' and sys.argv[4] == '{{.RootFS.Layers}}':
     print(f'[sha256:{os.environ["PODMAN_STUB_SHA256_SUM"]}]')
 else:
+    print(f'PODMAN stub: got invalid arguments: {sys.argv}', file=sys.stderr)
     sys.exit(1)

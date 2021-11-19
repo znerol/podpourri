@@ -17,7 +17,7 @@ A build job is run for each pushed branch. The public repository URL is
 generated from :confvalue:`repo.basedir` and :confvalue:`repo.baseurl`.
 
 A list of branches considered for automated builds can be specified in
-**~/.config/podpourri/podpourri.conf** (see: :manpage:`podpourri.conf(5)`)
+**~/.config/podpourri/podpourri.job.conf** (see: :manpage:`podpourri.job.conf(5)`)
 
 See Also
 --------
