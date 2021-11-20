@@ -53,7 +53,7 @@ class BuildPodmanTestCase(unittest.TestCase):
             'podpourri-build', self.repodir, 'jobtag-xyz')
 
         expect_lines = [
-            f'PODMAN build called with args: -t my-container-image:latest {self.repodir}/',
+            f'PODMAN build called with args: -t my-container-image:latest {self.repodir}',
             'PODMAN tag called with args: my-container-image:latest my-container-image:jobtag-xyz',
             ''
         ]
@@ -72,7 +72,7 @@ class BuildPodmanTestCase(unittest.TestCase):
             'podpourri-build', self.repodir, 'jobtag-xyz')
 
         expect_lines = [
-            f'PODMAN build called with args: -t registry.example.com/path/my-container-image:latest {self.repodir}/',
+            f'PODMAN build called with args: -t registry.example.com/path/my-container-image:latest {self.repodir}',
             'PODMAN tag called with args: registry.example.com/path/my-container-image:latest registry.example.com/path/my-container-image:jobtag-xyz',
             'PODMAN push called with args: registry.example.com/path/my-container-image:jobtag-xyz',
             'PODMAN push called with args: registry.example.com/path/my-container-image:latest',

@@ -17,14 +17,40 @@ path-exclude=/usr/share/linda/*
 EOF
 )"
 
+SOURCESLIST_DEFAULT="$(cat <<'EOF'
+deb https://deb.debian.org/debian bullseye main
+deb https://security.debian.org/debian-security bullseye-security main
+EOF
+)"
+
 # Print usage message and exit.
 usage() {
     echo "${0}: context config-name image-tag"
     return 1
 }
 
+podpourri_check_path() {
+    BASE="${1}"
+    RELATIVE="${2}"
+
+    FULL="${BASE}/${RELATIVE}"
+    if [ -e "${FULL}" ]; then
+        RESOLVED="$(realpath "${FULL}")"
+        if [ -z "${RESOLVED##$BASE*}"  ]; then
+            echo "${RESOLVED}"
+            return
+        else
+            echo "Podpourri: Invalid path: ${RELATIVE} points to file outside of build context" >&2
+        fi
+    else
+        echo "Podpourri: Invalid path: ${RELATIVE} does not exist" >&2
+    fi
+
+    return 1
+}
+
 podpourri_build_mmdebstrap() {
-    CONTEXT="${1}"
+    CONTEXT="$(realpath "${1}")"
     CONFIG_NAME="${2}"
     IMAGE_TAG="${3}"
     shift 3
@@ -32,26 +58,31 @@ podpourri_build_mmdebstrap() {
     REPOCONFIG="${CONTEXT}/.podpourri.conf"
 
     DPKGOPT="$(git config --file "${REPOCONFIG}" --type path --get "podpourri-image.${CONFIG_NAME}.dpkgOptFile" || echo)"
-    SOURCESLIST="$(git config --file "${REPOCONFIG}" --type path --get "podpourri-image.${CONFIG_NAME}.aptSourcesFile" || echo "/etc/apt/sources.list")"
+    SOURCESLIST="$(git config --file "${REPOCONFIG}" --type path --get "podpourri-image.${CONFIG_NAME}.aptSourcesFile" || echo)"
 
-    # Setup temp dir.
+    # Setup temporary files.
     ARCHIVE="$(mktemp)"
+    FULLDPKGOPT="$(mktemp)"
+    FULLSOURCESLIST="$(mktemp)"
+    # dpkg.cfg and sources.list files needs to be accessible from unshared user
+    # namespace. Make them world readable.
+    chmod 0644 "${FULLDPKGOPT}" "${FULLSOURCESLIST}"
+
     cleanup() {
-        rm -f "${ARCHIVE}"
+        rm -f "${ARCHIVE}" "${FULLDPKGOPT}" "${FULLSOURCESLIST}"
     }
     trap cleanup EXIT
 
-    if [ -z "${DPKGOPT}" ]; then
-        # File needs to be accessible from unshared user namespace. Make it
-        # world readable.
-        DPKGOPT="$(mktemp)"
-        chmod 0644 "${DPKGOPT}"
-        cleanup() {
-            rm -f "${DPKGOPT}"
-            rm -f "${ARCHIVE}"
-        }
-        trap cleanup EXIT
-        echo "${DPKGOPT_DEFAULT}" > "${DPKGOPT}"
+    if [ -n "${DPKGOPT}" ]; then
+        cat "$(podpourri_check_path "${CONTEXT}" "${DPKGOPT}")" > "${FULLDPKGOPT}"
+    else
+        echo "${DPKGOPT_DEFAULT}" > "${FULLDPKGOPT}"
+    fi
+
+    if [ -n "${SOURCESLIST}" ]; then
+        cat "$(podpourri_check_path "${CONTEXT}" "${SOURCESLIST}")" > "${FULLSOURCESLIST}"
+    else
+        echo "${SOURCESLIST_DEFAULT}" > "${FULLSOURCESLIST}"
     fi
 
     # https://reproducible-builds.org/docs/source-date-epoch/#git
@@ -62,9 +93,9 @@ podpourri_build_mmdebstrap() {
         SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
         mmdebstrap \
         --verbose \
-        --dpkgopt="${DPKGOPT}" \
+        --dpkgopt="${FULLDPKGOPT}" \
         --variant=required \
-        < "${SOURCESLIST}" > "${ARCHIVE}"
+        < "${FULLSOURCESLIST}" > "${ARCHIVE}"
     )
 
     ARCHIVE_DGST_OUT="$(sha256sum "${ARCHIVE}")"
