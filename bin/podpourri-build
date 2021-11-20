@@ -7,14 +7,19 @@ set -eu
 
 # Print usage message and exit.
 usage() {
-    echo "${0}: context jobtag"
+    echo "${0}: [-n] [context] [jobtag]"
     return 1
 }
 
 podpourri_build() {
-    CONTEXT="${1}"
-    JOBTAG="${2}"
-    shift 2
+    USE_REGISTRY="true"
+    if { [ "${1}" = "-n" ] || [ "${1}" = "--no-registry" ]; }; then
+        USE_REGISTRY="false"
+        shift 1
+    fi
+
+    CONTEXT="${1:-.}"
+    JOBTAG="${2:-}"
 
     REPOCONFIG="${CONTEXT}/.podpourri.conf"
 
@@ -46,7 +51,7 @@ podpourri_build() {
                     fi
 
                     BUILD_CACHE="$(git config --file "${REPOCONFIG}" --type bool --get "podpourri-image.${IMAGE_NAME}.cache" || echo "${DEFAULT_CACHE}")"
-                    if [ "${BUILD_CACHE}" = "true" ] && [ -n "${REGISTRY_PREFIX}" ]; then
+                    if [ "${BUILD_CACHE}" = "true" ] && [ "${USE_REGISTRY}" = "true" ] && [ -n "${REGISTRY_PREFIX}" ]; then
                         command podman image pull \
                           "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" || true
                         echo "Podpourri: Pulled build cache from ${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" >&2
@@ -57,15 +62,19 @@ podpourri_build() {
                       "${IMAGE_NAME}" \
                       "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
 
-                    command podman image tag \
-                        "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
-                        "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
-                    echo "Podpourri: Tagged ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
-
-                    if [ -n "${REGISTRY_PREFIX}" ]; then
-                        command podman image push \
+                    if [ -n "${JOBTAG}" ]; then
+                        command podman image tag \
+                            "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}" \
                             "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
-                        echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
+                        echo "Podpourri: Tagged ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
+                    fi
+
+                    if [ "${USE_REGISTRY}" = "true" ] && [ -n "${REGISTRY_PREFIX}" ]; then
+                        if [ -n "${JOBTAG}" ]; then
+                            command podman image push \
+                                "${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}"
+                            echo "Podpourri: Pushed ${REGISTRY_PREFIX}${IMAGE_NAME}:${JOBTAG}" >&2
+                        fi
 
                         command podman image push \
                             "${REGISTRY_PREFIX}${IMAGE_NAME}:${BRANCH}"
@@ -76,7 +85,7 @@ podpourri_build() {
     fi
 }
 
-if [ "${#}" -gt 1 ] && [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
+if [ "${1:-}" != "-h" ] && [ "${1:-}" != "--help" ]; then
     podpourri_build "${@}"
 else
     usage
