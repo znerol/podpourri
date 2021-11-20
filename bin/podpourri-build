@@ -18,7 +18,7 @@ podpourri_build() {
         shift 1
     fi
 
-    CONTEXT="${1:-.}"
+    CONTEXT="$(realpath "${1:-.}")"
     JOBTAG="${2:-}"
 
     REPOCONFIG="${CONTEXT}/.podpourri.conf"

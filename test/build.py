@@ -53,7 +53,7 @@ class BuildPodmanTestCase(unittest.TestCase):
             'podpourri-build', self.repodir, 'jobtag-xyz')
 
         expect_lines = [
-            f'PODMAN build called with args: -t my-container-image:latest {self.repodir}/',
+            f'PODMAN build called with args: -t my-container-image:latest {self.repodir}',
             'PODMAN tag called with args: my-container-image:latest my-container-image:jobtag-xyz',
             ''
         ]
@@ -72,7 +72,7 @@ class BuildPodmanTestCase(unittest.TestCase):
             'podpourri-build', self.repodir, 'jobtag-xyz')
 
         expect_lines = [
-            f'PODMAN build called with args: -t registry.example.com/path/my-container-image:latest {self.repodir}/',
+            f'PODMAN build called with args: -t registry.example.com/path/my-container-image:latest {self.repodir}',
             'PODMAN tag called with args: registry.example.com/path/my-container-image:latest registry.example.com/path/my-container-image:jobtag-xyz',
             'PODMAN push called with args: registry.example.com/path/my-container-image:jobtag-xyz',
             'PODMAN push called with args: registry.example.com/path/my-container-image:latest',
@@ -80,3 +80,89 @@ class BuildPodmanTestCase(unittest.TestCase):
         ]
 
         self.assertEqual(output, '\n'.join(expect_lines).encode())
+
+    def testPreventsAccessToBuildContextOutsideWorkingDirectory(self):
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                '[podpourri-image "my-container-image"]',
+                "    context = ../../../etc",
+            ]), file=fp)
+
+        with self.assertRaises(subprocess.CalledProcessError) as processError:
+            output = self._repo_cmd(
+                'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        exc = processError.exception
+        self.assertEqual(exc.returncode, 1)
+        self.assertEqual(exc.output, b"")
+
+    def testPreventsAccessToSymlinkedBuildContextOutsideWorkingDirectory(self):
+        os.symlink("/etc", os.path.join(self.repodir, "etc"))
+
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                '[podpourri-image "my-container-image"]',
+                "    context = etc",
+            ]), file=fp)
+
+        with self.assertRaises(subprocess.CalledProcessError) as processError:
+            output = self._repo_cmd(
+                'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        exc = processError.exception
+        self.assertEqual(exc.returncode, 1)
+        self.assertEqual(exc.output, b"")
+
+    def testPreventsAccessToContainerfileOutsideWorkingDirectory(self):
+        privaterepo = os.path.join(self.workdir, "privaterepo")
+        os.mkdir(privaterepo)
+        with open(os.path.join(privaterepo, "Containerfile"), "w") as fp:
+            print("FROM registry.example.com/private/app", file=fp)
+
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                '[podpourri-image "my-container-image"]',
+                "    containerfile = ../privaterepo/Containerfile",
+            ]), file=fp)
+
+        with self.assertRaises(subprocess.CalledProcessError) as processError:
+            output = self._repo_cmd(
+                'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        exc = processError.exception
+        self.assertEqual(exc.returncode, 1)
+        self.assertEqual(exc.output, b"")
+
+    def testPreventsAccessToSymlinkedContainerfileOutsideWorkingDirectory(self):
+        privaterepo = os.path.join(self.workdir, "privaterepo")
+        os.mkdir(privaterepo)
+        with open(os.path.join(privaterepo, "Containerfile"), "w") as fp:
+            print("FROM registry.example.com/private/app", file=fp)
+
+        os.symlink("../privaterepo/Containerfile", os.path.join(self.repodir, "Containerfile"))
+
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                '[podpourri-image "my-container-image"]',
+                "    containerfile = Containerfile",
+            ]), file=fp)
+
+        with self.assertRaises(subprocess.CalledProcessError) as processError:
+            output = self._repo_cmd(
+                'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        exc = processError.exception
+        self.assertEqual(exc.returncode, 1)
+        self.assertEqual(exc.output, b"")

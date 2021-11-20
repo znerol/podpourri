@@ -10,8 +10,28 @@ usage() {
     return 1
 }
 
+podpourri_check_path() {
+    BASE="${1}"
+    RELATIVE="${2}"
+
+    FULL="${BASE}/${RELATIVE}"
+    if [ -e "${FULL}" ]; then
+        RESOLVED="$(realpath "${FULL}")"
+        if [ -z "${RESOLVED##$BASE*}"  ]; then
+            echo "${RESOLVED}"
+            return
+        else
+            echo "Podpourri: Invalid path: ${RELATIVE} points to object outside of working directory" >&2
+        fi
+    else
+        echo "Podpourri: Invalid path: ${RELATIVE} does not exist" >&2
+    fi
+
+    return 1
+}
+
 podpourri_build() {
-    CONTEXT="${1}"
+    CONTEXT="$(realpath "${1}")"
     CONFIG_NAME="${2}"
     IMAGE_TAG="${3}"
     shift 3
@@ -21,17 +41,19 @@ podpourri_build() {
     BUILDCONTEXT="$(git config --file "${REPOCONFIG}" --get "podpourri-image.${CONFIG_NAME}.context" || echo)"
     CONTAINERFILE="$(git config --file "${REPOCONFIG}" --get "podpourri-image.${CONFIG_NAME}.containerfile" || echo)"
 
+    FULLBUILDCONTEXT="$(podpourri_check_path "${CONTEXT}" "${BUILDCONTEXT}")"
     if [ -n "${CONTAINERFILE}" ]; then
+        FULLCONTAINERFILE="$(podpourri_check_path "${CONTEXT}" "${CONTAINERFILE}")"
         command podman image build \
             -t "${IMAGE_TAG}" \
-            -f "${CONTEXT}/${CONTAINERFILE}" \
-            "${CONTEXT}/${BUILDCONTEXT}"
-        echo "Podpourri: Built ${IMAGE_TAG} using ${CONTEXT}/${CONTAINERFILE} in ${CONTEXT}/${BUILDCONTEXT}" >&2
+            -f "${FULLCONTAINERFILE}" \
+            "${FULLBUILDCONTEXT}"
+        echo "Podpourri: Built ${IMAGE_TAG} using ${FULLCONTAINERFILE} in ${FULLBUILDCONTEXT}" >&2
     else
         command podman image build \
             -t "${IMAGE_TAG}" \
-            "${CONTEXT}/${BUILDCONTEXT}"
-        echo "Podpourri: Built ${IMAGE_TAG} in ${CONTEXT}/${BUILDCONTEXT}" >&2
+            "${FULLBUILDCONTEXT}"
+        echo "Podpourri: Built ${IMAGE_TAG} in ${FULLBUILDCONTEXT}" >&2
     fi
 }
 

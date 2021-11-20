@@ -140,3 +140,103 @@ class BuildMmdebstrapTestCase(unittest.TestCase):
         ]
 
         self.assertRegex(output, b'^' + b'\n'.join(expect_lines) + b'\n$')
+
+    def testPreventsAccessToDpkgCfgOutsideWorkingDirectory(self):
+        privaterepo = os.path.join(self.workdir, "privaterepo")
+        os.mkdir(privaterepo)
+        with open(os.path.join(privaterepo, "dpkg.cfg"), "w") as fp:
+            print("", file=fp)
+
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                '[podpourri-image "my-container-image"]',
+                "    method = mmdebstrap",
+                "    dpkgOptFile = ../privaterepo/dpkg.cfg",
+            ]), file=fp)
+
+        with self.assertRaises(subprocess.CalledProcessError) as processError:
+            output = self._repo_cmd(
+                'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        exc = processError.exception
+        self.assertEqual(exc.returncode, 1)
+        self.assertEqual(exc.output, b"")
+
+    def testPreventsAccessToSymlinkedDpkgCfgOutsideWorkingDirectory(self):
+        privaterepo = os.path.join(self.workdir, "privaterepo")
+        os.mkdir(privaterepo)
+        with open(os.path.join(privaterepo, "dpkg.cfg"), "w") as fp:
+            print("", file=fp)
+
+        os.symlink("../privaterepo/dpkg.cfg", os.path.join(self.repodir, "dpkg.cfg"))
+
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                '[podpourri-image "my-container-image"]',
+                "    method = mmdebstrap",
+                "    dpkgOptFile = dpkg.cfg",
+            ]), file=fp)
+
+        with self.assertRaises(subprocess.CalledProcessError) as processError:
+            output = self._repo_cmd(
+                'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        exc = processError.exception
+        self.assertEqual(exc.returncode, 1)
+        self.assertEqual(exc.output, b"")
+
+    def testPreventsAccessToSourcesListOutsideWorkingDirectory(self):
+        privaterepo = os.path.join(self.workdir, "privaterepo")
+        os.mkdir(privaterepo)
+        with open(os.path.join(privaterepo, "sources.list"), "w") as fp:
+            print("deb https://apt:debian@example.org/debian bullseye main", file=fp)
+
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                '[podpourri-image "my-container-image"]',
+                "    method = mmdebstrap",
+                "    aptSourcesFile = ../privaterepo/sources.list",
+            ]), file=fp)
+
+        with self.assertRaises(subprocess.CalledProcessError) as processError:
+            output = self._repo_cmd(
+                'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        exc = processError.exception
+        self.assertEqual(exc.returncode, 1)
+        self.assertEqual(exc.output, b"")
+
+    def testPreventsAccessToSymlinkedSourcesListOutsideWorkingDirectory(self):
+        privaterepo = os.path.join(self.workdir, "privaterepo")
+        os.mkdir(privaterepo)
+        with open(os.path.join(privaterepo, "sources.list"), "w") as fp:
+            print("deb https://apt:debian@example.org/debian bullseye main", file=fp)
+
+        os.symlink("../privaterepo/sources.list", os.path.join(self.repodir, "sources.list"))
+
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    image = my-container-image",
+                "",
+                '[podpourri-image "my-container-image"]',
+                "    method = mmdebstrap",
+                "    aptSourcesFile = sources.list",
+            ]), file=fp)
+
+        with self.assertRaises(subprocess.CalledProcessError) as processError:
+            output = self._repo_cmd(
+                'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        exc = processError.exception
+        self.assertEqual(exc.returncode, 1)
+        self.assertEqual(exc.output, b"")
