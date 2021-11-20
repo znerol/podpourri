@@ -37,36 +37,39 @@ Section ``podpourri``:
    registry running on localhost on port 5000, use the following value:
    ``localhost:5000/``. Empty by default.
 
-Subsection ``podpourri-image``:
+Subsection ``podpourri-image.<name>``:
 
-.. confValue:: ``podpourri-image.<name>.method``
+.. confValue:: podpourri-image.<name>.method
 
    Method used to build an image. Possible values are ``podman`` (the default
    when empty) and ``mmdebstrap``.
 
-.. confValue:: ``podpourri-image.<name>.cache``
+.. confValue:: podpourri-image.<name>.cache
 
    Whether or not it is attempted to pull the image from the registry before the
    build. Default depends on the build method: ``false`` for ``podman`` and
    ``true`` for ``mmdebstrap``.
 
-Subsection ``podpourri-image`` additional options if ``method`` is ``podman``:
+Subsection ``podpourri-image.<name>`` additional options if ``method`` is
+``podman``:
 
-.. confValue:: ``podpourri-image.<name>.context``
+.. confValue:: podpourri-image.<name>.context
 
    Build context to use. Defaults to the project root directory.
 
-.. confValue:: ``podpourri-image.<name>.containerfile``
+.. confValue:: podpourri-image.<name>.containerfile
 
    Containerfile / Dockerfile to use. Defaults to the build context.
 
-Subsection ``podpourri-image`` additional options if ``method`` is
+Subsection ``podpourri-image.<name>`` additional options if ``method`` is
 ``mmdebstrap``:
 
-.. confValue:: ``podpourri-image.<name>.dpkgOptFile``
+.. confValue:: podpourri-image.<name>.dpkgOptFile
 
    A file containing default options for dpkg. Defaults to a file with the
    following contents:
+
+   ::
 
       path-exclude=/usr/share/man/*
       path-include=/usr/share/man/man[1-9]/*
@@ -77,10 +80,15 @@ Subsection ``podpourri-image`` additional options if ``method`` is
       path-exclude=/usr/share/lintian/*
       path-exclude=/usr/share/linda/*
 
-.. confValue:: ``podpourri-image.<name>.aptSourcesFile``
+.. confValue:: podpourri-image.<name>.aptSourcesFile
 
    A ``sources.list`` file used by ``apt`` to install packages from. Defaults to
-   ``/etc/apt/sources.list`` of the host machine.
+   a file with the following contents:
+
+   ::
+
+      deb https://deb.debian.org/debian bullseye main
+      deb https://security.debian.org/debian-security bullseye-security main
 
 
 Examples
@@ -89,11 +97,15 @@ Examples
 With the following ``.podpourri.conf`` one image with the name ``simple`` is
 built using a ``Containerfile`` / ``Dockerfile`` at the repository root:
 
+.. code-block:: ini
+
    [podpourri]
       image = simple
 
 With the following ``.podpourri.conf`` file two images are built ``myapp-ui``
 and ``myapp-api``. If successfull, they get pushed to ``registry.example.com``.
+
+.. code-block:: ini
 
    [podpourri]
       registryPrefix = registry.example.com/
