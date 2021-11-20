@@ -21,7 +21,7 @@ podpourri_check_path() {
             echo "${RESOLVED}"
             return
         else
-            echo "Podpourri: Invalid path: ${RELATIVE} points to file outside of build context" >&2
+            echo "Podpourri: Invalid path: ${RELATIVE} points to object outside of working directory" >&2
         fi
     else
         echo "Podpourri: Invalid path: ${RELATIVE} does not exist" >&2

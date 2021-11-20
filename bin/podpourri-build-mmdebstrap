@@ -40,7 +40,7 @@ podpourri_check_path() {
             echo "${RESOLVED}"
             return
         else
-            echo "Podpourri: Invalid path: ${RELATIVE} points to file outside of build context" >&2
+            echo "Podpourri: Invalid path: ${RELATIVE} points to object outside of working directory" >&2
         fi
     else
         echo "Podpourri: Invalid path: ${RELATIVE} does not exist" >&2
@@ -74,13 +74,15 @@ podpourri_build_mmdebstrap() {
     trap cleanup EXIT
 
     if [ -n "${DPKGOPT}" ]; then
-        cat "$(podpourri_check_path "${CONTEXT}" "${DPKGOPT}")" > "${FULLDPKGOPT}"
+        DPKGOPT_CUSTOM="$(podpourri_check_path "${CONTEXT}" "${DPKGOPT}")"
+        cat "${DPKGOPT_CUSTOM}" > "${FULLDPKGOPT}"
     else
         echo "${DPKGOPT_DEFAULT}" > "${FULLDPKGOPT}"
     fi
 
     if [ -n "${SOURCESLIST}" ]; then
-        cat "$(podpourri_check_path "${CONTEXT}" "${SOURCESLIST}")" > "${FULLSOURCESLIST}"
+        SOURCESLIST_CUSTOM="$(podpourri_check_path "${CONTEXT}" "${SOURCESLIST}")"
+        cat "${SOURCESLIST_CUSTOM}" > "${FULLSOURCESLIST}"
     else
         echo "${SOURCESLIST_DEFAULT}" > "${FULLSOURCESLIST}"
     fi
