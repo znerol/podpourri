@@ -29,7 +29,7 @@ do
         *)
             REPO_URL="${PWD}#${BRANCH}"
             if [ -n "$REPO_BASEDIR" ]; then
-                REPO_URL="${REPO_URL##${REPO_BASEDIR}}"
+                REPO_URL="${REPO_URL##"${REPO_BASEDIR}"}"
             fi
             if [ -n "$REPO_BASEURL" ]; then
                 REPO_URL="${REPO_BASEURL}${REPO_URL}"
