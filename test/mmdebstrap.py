@@ -125,7 +125,7 @@ class BuildMmdebstrapTestCase(unittest.TestCase):
 
         epoch="1234567890"
         # correct shasum for given epoch
-        shasum="e1a8cd773fb9663d7b2b71fd41f3e5b3c9b9302dda1c4b0c4a57f6af1126f89e"
+        shasum="cc5a5c9120523086453f7715bf501c1570b5d9d9215c0595e519a950487d6f96"
 
         output = self._repo_cmd('podpourri-build', self.repodir, 'jobtag-xyz',
                               env=dict(
