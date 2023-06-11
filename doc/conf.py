@@ -41,7 +41,6 @@ release = ''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinxcontrib.plantuml',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -61,7 +60,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -199,7 +198,3 @@ epub_exclude_files = ['search.html']
 def setup(app):
     app.add_object_type('envfile', 'envfile', indextemplate='environment files; %s')
     app.add_object_type('confvalue', 'confvalue', indextemplate='configuration variables; %s')
-
-# -- PlantUML configuration --------------------------------------------------
-
-plantuml = '/usr/bin/java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
