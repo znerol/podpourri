@@ -52,10 +52,10 @@ jobs:
     steps:
       - name: Install sphinx
         run: >
+            sudo apt-get update &&
             sudo apt-get install --yes
             python3-sphinx
             python3-sphinx-rtd-theme
-            python3-sphinxcontrib.plantuml
 
       - name: Checkout code
         uses: actions/checkout@v2
