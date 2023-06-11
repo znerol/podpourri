@@ -87,8 +87,8 @@ Subsection ``podpourri-image.<name>`` additional options if ``method`` is
 
    ::
 
-      deb https://deb.debian.org/debian bullseye main
-      deb https://security.debian.org/debian-security bullseye-security main
+      deb https://deb.debian.org/debian bookworm main
+      deb https://security.debian.org/debian-security bookworm-security main
 
 
 Examples

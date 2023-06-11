@@ -18,8 +18,8 @@ EOF
 )"
 
 SOURCESLIST_DEFAULT="$(cat <<'EOF'
-deb https://deb.debian.org/debian bullseye main
-deb https://security.debian.org/debian-security bullseye-security main
+deb https://deb.debian.org/debian bookworm main
+deb https://security.debian.org/debian-security bookworm-security main
 EOF
 )"
 
@@ -95,6 +95,7 @@ podpourri_build_mmdebstrap() {
         SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
         mmdebstrap \
         --verbose \
+        --include=ca-certificates,apt-transport-https \
         --dpkgopt="${FULLDPKGOPT}" \
         --variant=required \
         < "${FULLSOURCESLIST}" > "${ARCHIVE}"
