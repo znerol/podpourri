@@ -17,7 +17,7 @@ podpourri_check_path() {
     FULL="${BASE}/${RELATIVE}"
     if [ -e "${FULL}" ]; then
         RESOLVED="$(realpath "${FULL}")"
-        if [ -z "${RESOLVED##$BASE*}"  ]; then
+        if [ -z "${RESOLVED##"$BASE"*}"  ]; then
             echo "${RESOLVED}"
             return
         else
