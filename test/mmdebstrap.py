@@ -195,7 +195,7 @@ class BuildMmdebstrapTestCase(unittest.TestCase):
         privaterepo = os.path.join(self.workdir, "privaterepo")
         os.mkdir(privaterepo)
         with open(os.path.join(privaterepo, "sources.list"), "w") as fp:
-            print("deb https://apt:debian@example.org/debian bullseye main", file=fp)
+            print("deb https://apt:debian@example.org/debian bookworm main", file=fp)
 
         with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
             print("\n".join([
@@ -219,7 +219,7 @@ class BuildMmdebstrapTestCase(unittest.TestCase):
         privaterepo = os.path.join(self.workdir, "privaterepo")
         os.mkdir(privaterepo)
         with open(os.path.join(privaterepo, "sources.list"), "w") as fp:
-            print("deb https://apt:debian@example.org/debian bullseye main", file=fp)
+            print("deb https://apt:debian@example.org/debian bookworm main", file=fp)
 
         os.symlink("../privaterepo/sources.list", os.path.join(self.repodir, "sources.list"))
 
