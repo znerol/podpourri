@@ -81,6 +81,52 @@ class BuildPodmanTestCase(unittest.TestCase):
 
         self.assertEqual(output, '\n'.join(expect_lines).encode())
 
+    def testCallsPodmanPullAndBuildAndPush(self):
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    pull = public-registry.example.com/library/base:latest",
+                "    image = my-container-image",
+                "    registryPrefix = registry.example.com/path/",
+            ]), file=fp)
+
+        output = self._repo_cmd(
+            'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        expect_lines = [
+            'PODMAN pull called with args: public-registry.example.com/library/base:latest',
+            f'PODMAN build called with args: -t registry.example.com/path/my-container-image:latest {self.repodir}',
+            'PODMAN tag called with args: registry.example.com/path/my-container-image:latest registry.example.com/path/my-container-image:jobtag-xyz',
+            'PODMAN push called with args: registry.example.com/path/my-container-image:jobtag-xyz',
+            'PODMAN push called with args: registry.example.com/path/my-container-image:latest',
+            ''
+        ]
+
+        self.assertEqual(output, '\n'.join(expect_lines).encode())
+
+    def testCallsPodmanExcludePullAndBuildAndPush(self):
+        with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
+            print("\n".join([
+                "[podpourri]",
+                "    pull = public-registry.example.com/library/base:latest",
+                "    pullExcludeJobPrefix = jobtag-",
+                "    image = my-container-image",
+                "    registryPrefix = registry.example.com/path/",
+            ]), file=fp)
+
+        output = self._repo_cmd(
+            'podpourri-build', self.repodir, 'jobtag-xyz')
+
+        expect_lines = [
+            f'PODMAN build called with args: -t registry.example.com/path/my-container-image:latest {self.repodir}',
+            'PODMAN tag called with args: registry.example.com/path/my-container-image:latest registry.example.com/path/my-container-image:jobtag-xyz',
+            'PODMAN push called with args: registry.example.com/path/my-container-image:jobtag-xyz',
+            'PODMAN push called with args: registry.example.com/path/my-container-image:latest',
+            ''
+        ]
+
+        self.assertEqual(output, '\n'.join(expect_lines).encode())
+
     def testPreventsAccessToBuildContextOutsideWorkingDirectory(self):
         with open(os.path.join(self.repodir, ".podpourri.conf"), "w") as fp:
             print("\n".join([
