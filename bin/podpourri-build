@@ -34,11 +34,22 @@ podpourri_build() {
             *)
                 REGISTRY_PREFIX="$(git config --file "${REPOCONFIG}" --get podpourri.registryPrefix || echo)"
 
-                PULLS="$(git config --file "${REPOCONFIG}" --get-all podpourri.pull || echo)"
-                for IMAGE_NAME in ${PULLS}; do
-                    command podman image pull "$IMAGE_NAME"
-                    echo "Podpourri: Pulled ${IMAGE_NAME}" >&2
+                PULL_PERMITTED=1
+                PULL_EXCLUDE_JOB_PREFIX="$(git config --file "${REPOCONFIG}" --get-all podpourri.pullExcludeJobPrefix || echo)"
+                for EXCLUDE_JOB_PREFIX in ${PULL_EXCLUDE_JOB_PREFIX}; do
+                    if [ "${JOBTAG}" != "${JOBTAG##"${EXCLUDE_JOB_PREFIX}"}" ]; then
+                        echo "Podpourri: Disable pulling, jobtag matches ${EXCLUDE_JOB_PREFIX}" >&2
+                        PULL_PERMITTED=0
+                    fi
                 done
+
+                if [ "${PULL_PERMITTED}" -eq "1" ]; then
+                    PULLS="$(git config --file "${REPOCONFIG}" --get-all podpourri.pull || echo)"
+                    for IMAGE_NAME in ${PULLS}; do
+                        command podman image pull "$IMAGE_NAME"
+                        echo "Podpourri: Pulled ${IMAGE_NAME}" >&2
+                    done
+                fi
 
                 IMAGES="$(git config --file "${REPOCONFIG}" --get-all podpourri.image || echo)"
 

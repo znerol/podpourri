@@ -29,6 +29,14 @@ Section ``podpourri``:
    Name of an image which should be pulled before the build. This option can be
    repeated multiple times in order to pull multiple images.
 
+.. confValue:: podpourri.pullExcludeJobPrefix
+
+   Prefixes of job tags when the image-pull step is to be skipped. This option
+   can be repeated multiple times in order to specify several job prefixes.
+   Specify ``pullExcludeJobPrefix = build-push-`` to disable pulling images
+   when new refs are pushed to the repository while keep pulling images during
+   automatic rebuilds.
+
 .. confvalue:: podpourri.registryPrefix
 
    Prefix for all images built by ``podpourri-build``. When set, images built
